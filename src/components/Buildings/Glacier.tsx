@@ -20,8 +20,10 @@ function Iceberg({ position = [0, 0, 0], scale = 1, rotation = [0, 0, 0] }: Iceb
   const { nightFactor, isNight } = useDayNight();
   const iceTexture = useMemo(() => createIceTexture(), []);
 
-  const height = 0.25 + Math.random() * 0.15;
-  const radius = 0.1 + Math.random() * 0.05;
+  const { height, radius } = useMemo(() => ({
+    height: 0.25 + Math.random() * 0.15,
+    radius: 0.1 + Math.random() * 0.05,
+  }), []);
 
   const iceEmissiveIntensity = isNight ? nightFactor * 0.4 : 0.1;
   const iceTransmission = isNight ? 0.2 + nightFactor * 0.3 : 0.3;

@@ -18,8 +18,10 @@ interface TreeProps {
 function Tree({ position = [0, 0, 0], scale = 1 }: TreeProps) {
   const { nightFactor, isNight } = useDayNight();
   const barkTexture = useMemo(() => createBarkTexture(), []);
-  const height = 0.4 + Math.random() * 0.2;
-  const crownRadius = 0.08 + Math.random() * 0.04;
+  const { height, crownRadius } = useMemo(() => ({
+    height: 0.4 + Math.random() * 0.2,
+    crownRadius: 0.08 + Math.random() * 0.04,
+  }), []);
 
   const leafNightTint = isNight ? nightFactor * 0.2 : 0;
 
@@ -209,9 +211,15 @@ export function Forest({ position, scale = 1, rotation = [0, 0, 0] }: BuildingPr
     return fireflies;
   }, []);
 
-  const flowerNightColors = useMemo(() => {
+  const flowerData = useMemo(() => {
     return Array.from({ length: 6 }, (_, i) => ({
       index: i,
+      position: [
+        (Math.random() - 0.5) * 0.5,
+        0.01,
+        (Math.random() - 0.5) * 0.5,
+      ] as [number, number, number],
+      dayColor: i % 2 === 0 ? '#ff69b4' : '#ffeb3b',
       nightColor: i % 2 === 0 ? '#ff88bb' : '#ffee88',
     }));
   }, []);
@@ -237,19 +245,15 @@ export function Forest({ position, scale = 1, rotation = [0, 0, 0] }: BuildingPr
       <Bush position={[-0.18, 0, 0.02]} scale={0.8} />
       <Bush position={[0.15, 0, -0.05]} scale={0.9} />
 
-      {Array.from({ length: 6 }).map((_, i) => (
+      {flowerData.map((flower) => (
         <mesh
-          key={`flower-${i}`}
-          position={[
-            (Math.random() - 0.5) * 0.5,
-            0.01,
-            (Math.random() - 0.5) * 0.5
-          ]}
+          key={`flower-${flower.index}`}
+          position={flower.position}
         >
           <sphereGeometry args={[0.012, 6, 6]} />
           <meshStandardMaterial
-            color={i % 2 === 0 ? '#ff69b4' : '#ffeb3b'}
-            emissive={isNight ? flowerNightColors[i]?.nightColor || '#ffffff' : (i % 2 === 0 ? '#ff69b4' : '#ffeb3b')}
+            color={flower.dayColor}
+            emissive={isNight ? flower.nightColor : flower.dayColor}
             emissiveIntensity={isNight ? nightFactor * 0.5 : 0.2}
           />
         </mesh>

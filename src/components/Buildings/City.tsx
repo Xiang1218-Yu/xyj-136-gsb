@@ -233,6 +233,20 @@ export function City({ position, scale = 1, rotation = [0, 0, 0] }: BuildingProp
     { pos: [0.02, 0.3, -0.13] as [number, number, number], color: '#ffff00' },
   ], []);
 
+  const streetGlowData = useMemo(() => {
+    return Array.from({ length: 8 }, (_, i) => {
+      const angle = (i / 8) * Math.PI * 2;
+      const dist = 0.3 + Math.random() * 0.05;
+      return {
+        position: [
+          Math.cos(angle) * dist,
+          0.02,
+          Math.sin(angle) * dist,
+        ] as [number, number, number],
+      };
+    });
+  }, []);
+
   return (
     <group position={position} scale={scale} rotation={rotation}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
@@ -321,27 +335,19 @@ export function City({ position, scale = 1, rotation = [0, 0, 0] }: BuildingProp
 
       {isNight && (
         <group>
-          {Array.from({ length: 8 }).map((_, i) => {
-            const angle = (i / 8) * Math.PI * 2;
-            const dist = 0.3 + Math.random() * 0.05;
-            return (
-              <mesh
-                key={`street-light-glow-${i}`}
-                position={[
-                  Math.cos(angle) * dist,
-                  0.02,
-                  Math.sin(angle) * dist,
-                ]}
-              >
-                <sphereGeometry args={[0.015, 8, 8]} />
-                <meshBasicMaterial
-                  color="#ffcc33"
-                  transparent
-                  opacity={nightFactor * 0.15}
-                />
-              </mesh>
-            );
-          })}
+          {streetGlowData.map((glow, i) => (
+            <mesh
+              key={`street-light-glow-${i}`}
+              position={glow.position}
+            >
+              <sphereGeometry args={[0.015, 8, 8]} />
+              <meshBasicMaterial
+                color="#ffcc33"
+                transparent
+                opacity={nightFactor * 0.15}
+              />
+            </mesh>
+          ))}
         </group>
       )}
     </group>

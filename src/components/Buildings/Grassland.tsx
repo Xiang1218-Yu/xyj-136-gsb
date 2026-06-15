@@ -347,6 +347,18 @@ export function Grassland({ position, scale = 1, rotation = [0, 0, 0] }: Buildin
     return fireflies;
   }, []);
 
+  const stoneData = useMemo(() => {
+    return Array.from({ length: 3 }, () => ({
+      position: [
+        (Math.random() - 0.5) * 0.5,
+        0.01,
+        (Math.random() - 0.5) * 0.5,
+      ] as [number, number, number],
+      rotation: [Math.random(), Math.random(), Math.random()] as [number, number, number],
+      scale: 0.015 + Math.random() * 0.015,
+    }));
+  }, []);
+
   return (
     <group position={position} scale={scale} rotation={rotation}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
@@ -401,19 +413,15 @@ export function Grassland({ position, scale = 1, rotation = [0, 0, 0] }: Buildin
         <Firefly key={`firefly-${i}`} position={firefly.pos} color={firefly.color} />
       ))}
 
-      {Array.from({ length: 3 }).map((_, i) => (
+      {stoneData.map((stone, i) => (
         <mesh
           key={`stone-${i}`}
-          position={[
-            (Math.random() - 0.5) * 0.5,
-            0.01,
-            (Math.random() - 0.5) * 0.5,
-          ]}
-          rotation={[Math.random(), Math.random(), Math.random()]}
+          position={stone.position}
+          rotation={stone.rotation}
           castShadow
           receiveShadow
         >
-          <dodecahedronGeometry args={[0.015 + Math.random() * 0.015, 0]} />
+          <dodecahedronGeometry args={[stone.scale, 0]} />
           <meshStandardMaterial color="#888888" roughness={0.95} />
         </mesh>
       ))}

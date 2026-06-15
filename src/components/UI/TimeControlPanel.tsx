@@ -35,8 +35,8 @@ export function TimeControlPanel() {
   ];
 
   return (
-    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-20">
-      <div className="bg-black/60 backdrop-blur-md rounded-2xl px-6 py-4 text-white shadow-2xl border border-white/10">
+    <div className="fixed top-4 right-4 z-20">
+      <div className="bg-black/60 backdrop-blur-md rounded-2xl px-5 py-3 text-white shadow-2xl border border-white/10">
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center gap-3">
             <span className="text-2xl">
