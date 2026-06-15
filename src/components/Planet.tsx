@@ -1,7 +1,8 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { PLANET_RADIUS } from '../utils/helpers';
+import { createPlanetTexture, createCloudTexture } from '../utils/texture';
 import { Building } from '../types/game';
 import { Forest } from './Buildings/Forest';
 import { Glacier } from './Buildings/Glacier';
@@ -16,18 +17,50 @@ interface PlanetProps {
   buildings?: Building[];
 }
 
+function createTerrainGeometry(radius: number, widthSeg: number, heightSeg: number): THREE.SphereGeometry {
+  const geometry = new THREE.SphereGeometry(radius, widthSeg, heightSeg);
+  const positions = geometry.attributes.position;
+  const vertex = new THREE.Vector3();
+
+  for (let i = 0; i < positions.count; i++) {
+    vertex.fromBufferAttribute(positions, i);
+    const noise =
+      Math.sin(vertex.x * 2.5) * Math.cos(vertex.y * 2.5) * 0.015 +
+      Math.sin(vertex.x * 5 + vertex.y * 3) * Math.cos(vertex.z * 4) * 0.008 +
+      Math.cos(vertex.y * 6) * Math.sin(vertex.z * 6) * 0.005;
+
+    vertex.normalize().multiplyScalar(radius + noise);
+    positions.setXYZ(i, vertex.x, vertex.y, vertex.z);
+  }
+
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildings = [] }: PlanetProps) {
   const groupRef = useRef<THREE.Group>(null);
   const planetRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
-  const atmosphereRef = useRef<THREE.Mesh>(null);
+  const terrainRef = useRef<THREE.Mesh>(null);
 
-  const groundColor = useMemo(() => {
+  const planetTexture = useMemo(() => createPlanetTexture(), []);
+  const cloudTexture = useMemo(() => createCloudTexture(), []);
+
+  const terrainGeometry = useMemo(
+    () => createTerrainGeometry(PLANET_RADIUS + 0.005, 128, 128),
+    []
+  );
+
+  useEffect(() => {
     const t = lifeIndex / 100;
-    const r = 0.5 + t * 0.1;
-    const g = 0.4 + t * 0.35;
-    const b = 0.3 + t * 0.1;
-    return new THREE.Color(r, g, b);
+    if (planetRef.current) {
+      const mat = planetRef.current.material as THREE.MeshStandardMaterial;
+      mat.color.setRGB(
+        0.35 + t * 0.15,
+        0.3 + t * 0.35,
+        0.4 + t * 0.05
+      );
+    }
   }, [lifeIndex]);
 
   useFrame((state, delta) => {
@@ -35,7 +68,10 @@ export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildi
       groupRef.current.rotation.y += delta * 0.03;
     }
     if (cloudsRef.current) {
-      cloudsRef.current.rotation.y += delta * 0.02;
+      cloudsRef.current.rotation.y += delta * 0.015;
+    }
+    if (terrainRef.current) {
+      terrainRef.current.rotation.y += delta * 0.03;
     }
   });
 
@@ -57,27 +93,40 @@ export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildi
         castShadow
         receiveShadow
       >
-        <sphereGeometry args={[PLANET_RADIUS, 64, 64]} />
+        <sphereGeometry args={[PLANET_RADIUS, 128, 128]} />
         <meshStandardMaterial
-          color={groundColor}
-          roughness={0.8}
-          metalness={0.1}
+          map={planetTexture}
+          roughness={0.85}
+          metalness={0.05}
+        />
+      </mesh>
+
+      <mesh ref={terrainRef} receiveShadow>
+        <primitive object={terrainGeometry} attach="geometry" />
+        <meshStandardMaterial
+          map={planetTexture}
+          transparent
+          opacity={0.6}
+          roughness={0.95}
+          metalness={0}
+          depthWrite={false}
         />
       </mesh>
 
       <mesh ref={cloudsRef}>
-        <sphereGeometry args={[PLANET_RADIUS + 0.03, 32, 32]} />
+        <sphereGeometry args={[PLANET_RADIUS + 0.05, 64, 64]} />
         <meshStandardMaterial
+          map={cloudTexture}
           color="#ffffff"
           transparent
-          opacity={0.3}
+          opacity={0.45}
           depthWrite={false}
         />
       </mesh>
 
       {buildings.map((building) => {
         const normal = new THREE.Vector3(...building.position).normalize();
-        const surfacePos = normal.clone().multiplyScalar(PLANET_RADIUS + 0.02);
+        const surfacePos = normal.clone().multiplyScalar(PLANET_RADIUS + 0.03);
         const position: [number, number, number] = [
           surfacePos.x,
           surfacePos.y,
@@ -119,33 +168,36 @@ export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildi
         return null;
       })}
 
-      <mesh ref={atmosphereRef} scale={1.08}>
+      <mesh scale={1.06}>
         <sphereGeometry args={[PLANET_RADIUS, 64, 64]} />
         <meshBasicMaterial
-          color="#8ec5ff"
+          color="#a8d8ff"
           transparent
-          opacity={0.25}
+          opacity={0.22}
           side={THREE.BackSide}
+          depthWrite={false}
         />
       </mesh>
 
-      <mesh scale={1.18}>
+      <mesh scale={1.15}>
         <sphereGeometry args={[PLANET_RADIUS, 64, 64]} />
         <meshBasicMaterial
-          color="#5aa8ff"
+          color="#6ab0ff"
           transparent
           opacity={0.12}
           side={THREE.BackSide}
+          depthWrite={false}
         />
       </mesh>
 
-      <mesh scale={1.3}>
+      <mesh scale={1.28}>
         <sphereGeometry args={[PLANET_RADIUS, 64, 64]} />
         <meshBasicMaterial
-          color="#3d8bff"
+          color="#4a9eff"
           transparent
-          opacity={0.06}
+          opacity={0.05}
           side={THREE.BackSide}
+          depthWrite={false}
         />
       </mesh>
     </group>
