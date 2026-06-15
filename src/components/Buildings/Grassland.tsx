@@ -162,12 +162,13 @@ function GlowingMushroom({
   position: [number, number, number];
 }) {
   const { nightFactor, isNight } = useDayNight();
-  const lightRef = useRef<THREE.PointLight>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
-    if (lightRef.current) {
+    if (meshRef.current) {
       const pulse = 0.8 + Math.sin(state.clock.elapsedTime * 2) * 0.2;
-      lightRef.current.intensity = nightFactor * pulse * 0.2;
+      const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+      mat.emissiveIntensity = nightFactor * pulse;
     }
   });
 
@@ -183,9 +184,10 @@ function GlowingMushroom({
           emissiveIntensity={nightFactor * 0.8}
           transparent
           opacity={0.8}
+          toneMapped={false}
         />
       </mesh>
-      <mesh position={[0, 0.03, 0]}>
+      <mesh ref={meshRef} position={[0, 0.03, 0]}>
         <sphereGeometry args={[0.015, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial
           color="#66ff99"
@@ -193,16 +195,9 @@ function GlowingMushroom({
           emissiveIntensity={nightFactor}
           transparent
           opacity={0.9}
+          toneMapped={false}
         />
       </mesh>
-      <pointLight
-        ref={lightRef}
-        position={[0, 0.03, 0]}
-        color="#44ff88"
-        intensity={nightFactor * 0.2}
-        distance={0.2}
-        decay={2}
-      />
     </group>
   );
 }

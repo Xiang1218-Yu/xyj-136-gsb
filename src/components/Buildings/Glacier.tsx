@@ -148,6 +148,7 @@ function IceCrystal({
           envMapIntensity={1}
           emissive="#88ddff"
           emissiveIntensity={crystalEmissive}
+          toneMapped={false}
         />
       </mesh>
       <mesh position={[0.015, -0.01, 0.01]} rotation={[0.5, 0.3, 0]} castShadow>
@@ -161,18 +162,9 @@ function IceCrystal({
           clearcoat={1}
           emissive="#99eeff"
           emissiveIntensity={crystalEmissive * 0.8}
+          toneMapped={false}
         />
       </mesh>
-      
-      {isNight && (
-        <pointLight
-          position={[0, 0, 0]}
-          color="#88ccff"
-          intensity={nightFactor * 0.15}
-          distance={0.3}
-          decay={2}
-        />
-      )}
     </group>
   );
 }

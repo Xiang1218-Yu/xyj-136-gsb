@@ -71,13 +71,14 @@ function DynamicLighting() {
         intensity={sunIntensity}
         color={sunColor}
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
         shadow-camera-far={50}
-        shadow-camera-left={-10}
-        shadow-camera-right={10}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
+        shadow-camera-left={-8}
+        shadow-camera-right={8}
+        shadow-camera-top={8}
+        shadow-camera-bottom={-8}
+        shadow-bias={-0.0005}
       />
       <hemisphereLight ref={hemisphereLightRef} args={['#87ceeb', '#5d7a5d', 0.4]} />
       <pointLight
@@ -95,10 +96,14 @@ function DynamicLighting() {
 function DynamicSky() {
   const { skyColor, isNight } = useDayNight();
   const { scene } = useThree();
+  const fogRef = useRef(new THREE.Fog(skyColor, 20, 50));
 
   useFrame(() => {
     scene.background = skyColor;
-    scene.fog = new THREE.Fog(skyColor, 20, 50);
+    if (fogRef.current) {
+      fogRef.current.color.copy(skyColor);
+    }
+    scene.fog = fogRef.current;
   });
 
   return null;
@@ -154,12 +159,13 @@ function SceneContent({
         dampingFactor={0.05}
       />
 
-      <EffectComposer>
+      <EffectComposer multisampling={0}>
         <Bloom
-          intensity={0.8}
-          luminanceThreshold={0.4}
-          luminanceSmoothing={0.9}
+          intensity={0.6}
+          luminanceThreshold={0.5}
+          luminanceSmoothing={0.85}
           mipmapBlur
+          radius={0.5}
         />
         <Vignette
           offset={0.5}
@@ -174,9 +180,10 @@ export function GameCanvas(props: GameCanvasProps) {
   return (
     <Canvas
       camera={{ position: [0, 0, 6], fov: 60 }}
-      gl={{ antialias: true, alpha: false }}
-      dpr={[1, 2]}
+      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+      dpr={[1, 1.5]}
       shadows
+      frameloop="always"
     >
       <SceneContent {...props} />
     </Canvas>

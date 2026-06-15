@@ -131,7 +131,6 @@ function Skyscraper({
 
 function StreetLight({ position }: { position: [number, number, number] }) {
   const { nightFactor, isNight } = useDayNight();
-  const lightRef = useRef<THREE.PointLight>(null);
 
   const lightIntensity = isNight ? 1.5 + nightFactor * 2 : 0.3;
   const bulbOpacity = isNight ? 0.9 + nightFactor * 0.1 : 0.5;
@@ -154,28 +153,20 @@ function StreetLight({ position }: { position: [number, number, number] }) {
           emissiveIntensity={lightIntensity}
           transparent
           opacity={bulbOpacity}
+          toneMapped={false}
         />
       </mesh>
       
       {isNight && (
-        <>
-          <pointLight
-            ref={lightRef}
-            position={[0.04, 0.13, 0]}
-            color="#ffcc33"
-            intensity={nightFactor * 0.8}
-            distance={0.8}
-            decay={2}
+        <mesh position={[0.04, 0.13, 0]}>
+          <sphereGeometry args={[0.025, 8, 8]} />
+          <meshBasicMaterial
+            color="#ffeb99"
+            transparent
+            opacity={nightFactor * 0.3}
+            toneMapped={false}
           />
-          <mesh position={[0.04, 0.13, 0]}>
-            <sphereGeometry args={[0.025, 8, 8]} />
-            <meshBasicMaterial
-              color="#ffeb99"
-              transparent
-              opacity={nightFactor * 0.3}
-            />
-          </mesh>
-        </>
+        </mesh>
       )}
     </group>
   );
@@ -202,6 +193,7 @@ function NeonSign({
           color={color}
           transparent
           opacity={nightFactor * 0.9}
+          toneMapped={false}
         />
       </mesh>
       <mesh position={[0, 0, 0.003]}>
@@ -210,15 +202,9 @@ function NeonSign({
           color={color}
           transparent
           opacity={nightFactor * 0.3}
+          toneMapped={false}
         />
       </mesh>
-      <pointLight
-        position={[0, 0, 0.01]}
-        color={color}
-        intensity={nightFactor * 0.3}
-        distance={0.5}
-        decay={2}
-      />
     </group>
   );
 }

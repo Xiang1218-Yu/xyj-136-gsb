@@ -142,7 +142,6 @@ function Firefly({
 }) {
   const { nightFactor, isNight } = useDayNight();
   const meshRef = useRef<THREE.Mesh>(null);
-  const lightRef = useRef<THREE.PointLight>(null);
   const offset = useRef(Math.random() * Math.PI * 2);
   const basePos = useRef(position);
 
@@ -157,35 +156,20 @@ function Firefly({
       const mat = meshRef.current.material as THREE.MeshBasicMaterial;
       mat.opacity = nightFactor * pulse;
     }
-    if (lightRef.current) {
-      const t = state.clock.elapsedTime * 2 + offset.current;
-      const pulse = 0.5 + Math.sin(t * 3) * 0.5;
-      lightRef.current.intensity = nightFactor * pulse * 0.3;
-    }
   });
 
   if (!isNight) return null;
 
   return (
-    <group>
-      <mesh ref={meshRef} position={position}>
-        <sphereGeometry args={[0.006, 6, 6]} />
-        <meshBasicMaterial
-          color={color}
-          transparent
-          opacity={nightFactor * 0.8}
-          toneMapped={false}
-        />
-      </mesh>
-      <pointLight
-        ref={lightRef}
-        position={position}
+    <mesh ref={meshRef} position={position}>
+      <sphereGeometry args={[0.006, 6, 6]} />
+      <meshBasicMaterial
         color={color}
-        intensity={nightFactor * 0.2}
-        distance={0.3}
-        decay={2}
+        transparent
+        opacity={nightFactor * 0.8}
+        toneMapped={false}
       />
-    </group>
+    </mesh>
   );
 }
 
