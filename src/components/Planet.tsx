@@ -281,9 +281,13 @@ export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding,
             onPointerOut={handleCreaturePointerOut}
           >
             <CreatureComponent type={creature.type} position={[0, 0, 0]} scale={1} />
+            <mesh position={[0, 0.1, 0]}>
+              <sphereGeometry args={[0.3, 8, 8]} />
+              <meshBasicMaterial transparent opacity={0} />
+            </mesh>
             {isDeleteMode && isHovered && (
-              <mesh position={[0, 0.05, 0]}>
-                <ringGeometry args={[0.08, 0.1, 32]} />
+              <mesh position={[0, 0.2, 0]}>
+                <ringGeometry args={[0.25, 0.3, 32]} />
                 <meshBasicMaterial color="#ef4444" transparent opacity={0.9} side={THREE.DoubleSide} />
               </mesh>
             )}
