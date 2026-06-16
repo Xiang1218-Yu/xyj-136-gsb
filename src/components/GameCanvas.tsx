@@ -7,15 +7,18 @@ import { Planet } from './Planet';
 import { Moon } from './Moon';
 import { Sun } from './Sun';
 import { Starfield } from './Starfield';
-import { Building, BuildingType, ToolType, ActiveDisaster } from '../types/game';
-import { PLANET_RADIUS } from '../utils/helpers';
+import { Building, Creature, BuildingType, CreatureType, ToolType, ActiveDisaster } from '../types/game';
+import { PLANET_RADIUS, isBuildingType, isCreatureType } from '../utils/helpers';
 import { useDayNight } from '../contexts/DayNightContext';
 
 interface GameCanvasProps {
   buildings: Building[];
+  creatures: Creature[];
   selectedTool: ToolType | null;
   onAddBuilding: (type: BuildingType, position: [number, number, number]) => void;
+  onAddCreature: (type: CreatureType, position: [number, number, number]) => void;
   onRemoveBuilding: (id: string) => void;
+  onRemoveCreature: (id: string) => void;
   lifeIndex: number;
   disasters?: ActiveDisaster[];
 }
@@ -111,9 +114,12 @@ function DynamicSky() {
 
 function SceneContent({
   buildings,
+  creatures,
   selectedTool,
   onAddBuilding,
+  onAddCreature,
   onRemoveBuilding,
+  onRemoveCreature,
   lifeIndex,
   disasters = [],
 }: GameCanvasProps) {
@@ -123,7 +129,13 @@ function SceneContent({
     if (selectedTool && selectedTool !== 'delete') {
       const normalized = point.clone().normalize();
       const surfacePoint = normalized.multiplyScalar(PLANET_RADIUS);
-      onAddBuilding(selectedTool, [surfacePoint.x, surfacePoint.y, surfacePoint.z]);
+      const position: [number, number, number] = [surfacePoint.x, surfacePoint.y, surfacePoint.z];
+
+      if (isBuildingType(selectedTool)) {
+        onAddBuilding(selectedTool, position);
+      } else if (isCreatureType(selectedTool)) {
+        onAddCreature(selectedTool, position);
+      }
     }
   };
 
@@ -139,11 +151,13 @@ function SceneContent({
       <Planet
         onClick={handlePlanetClick}
         onRemoveBuilding={onRemoveBuilding}
+        onRemoveCreature={onRemoveCreature}
         selectedTool={selectedTool}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
         lifeIndex={lifeIndex}
         buildings={buildings}
+        creatures={creatures}
         disasters={disasters}
       />
 

@@ -877,3 +877,38 @@ export function FireflySwarm({ center, count = 6 }: FireflySwarmProps) {
     </group>
   );
 }
+
+interface CreatureProps {
+  type: string;
+  position: [number, number, number];
+  scale?: number;
+}
+
+export function Creature({ type, position, scale = 1 }: CreatureProps) {
+  const scaledPos: [number, number, number] = [
+    position[0] * scale,
+    position[1] * scale,
+    position[2] * scale,
+  ];
+
+  switch (type) {
+    case 'bird':
+      return <Bird position={scaledPos} speed={1} radius={0.15} height={0.2} />;
+    case 'squirrel':
+      return <Squirrel position={scaledPos} />;
+    case 'deer':
+      return <Deer position={scaledPos} />;
+    case 'butterfly':
+      return <Butterfly position={scaledPos} speed={1} />;
+    case 'rabbit':
+      return <Rabbit position={scaledPos} />;
+    case 'penguin':
+      return <Penguin position={scaledPos} />;
+    case 'snowOwl':
+      return <SnowOwl position={scaledPos} flyRadius={0.15} />;
+    case 'pigeon':
+      return <Pigeon position={scaledPos} />;
+    default:
+      return null;
+  }
+}

@@ -3,11 +3,12 @@ import { useFrame, ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { PLANET_RADIUS } from '../utils/helpers';
 import { createPlanetTexture, createCloudTexture } from '../utils/texture';
-import { Building, ActiveDisaster, ToolType } from '../types/game';
+import { Building, Creature, ActiveDisaster, ToolType } from '../types/game';
 import { Forest } from './Buildings/Forest';
 import { Glacier } from './Buildings/Glacier';
 import { City } from './Buildings/City';
 import { Grassland } from './Buildings/Grassland';
+import { Creature as CreatureComponent } from './Creatures/Creatures';
 import { DisasterEffect } from './DisasterEffect';
 
 interface PlanetProps {
@@ -15,9 +16,11 @@ interface PlanetProps {
   onPointerOver?: () => void;
   onPointerOut?: () => void;
   onRemoveBuilding?: (id: string) => void;
+  onRemoveCreature?: (id: string) => void;
   selectedTool?: ToolType | null;
   lifeIndex: number;
   buildings?: Building[];
+  creatures?: Creature[];
   disasters?: ActiveDisaster[];
 }
 
@@ -59,12 +62,13 @@ function BuildingHealthBar({ health, maxHealth }: { health: number; maxHealth: n
   );
 }
 
-export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding, selectedTool, lifeIndex, buildings = [], disasters = [] }: PlanetProps) {
+export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding, onRemoveCreature, selectedTool, lifeIndex, buildings = [], creatures = [], disasters = [] }: PlanetProps) {
   const groupRef = useRef<THREE.Group>(null);
   const planetRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
   const terrainRef = useRef<THREE.Mesh>(null);
   const [hoveredBuildingId, setHoveredBuildingId] = useState<string | null>(null);
+  const [hoveredCreatureId, setHoveredCreatureId] = useState<string | null>(null);
 
   const planetTexture = useMemo(() => createPlanetTexture(), []);
   const cloudTexture = useMemo(() => createCloudTexture(), []);
@@ -220,6 +224,66 @@ export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding,
             {isDeleteMode && isHovered && (
               <mesh position={[0, 0.05, 0]}>
                 <ringGeometry args={[0.15, 0.17, 32]} />
+                <meshBasicMaterial color="#ef4444" transparent opacity={0.9} side={THREE.DoubleSide} />
+              </mesh>
+            )}
+          </group>
+        );
+      })}
+
+      {creatures.map((creature) => {
+        const normal = new THREE.Vector3(...creature.position).normalize();
+        const surfacePos = normal.clone().multiplyScalar(PLANET_RADIUS + 0.03);
+        const position: [number, number, number] = [
+          surfacePos.x,
+          surfacePos.y,
+          surfacePos.z,
+        ];
+        const quaternion = new THREE.Quaternion().setFromUnitVectors(
+          new THREE.Vector3(0, 1, 0),
+          normal
+        );
+
+        const isDeleteMode = selectedTool === 'delete';
+        const isHovered = hoveredCreatureId === creature.id;
+
+        const handleCreatureClick = (e: ThreeEvent<MouseEvent>) => {
+          e.stopPropagation();
+          if (isDeleteMode && onRemoveCreature) {
+            onRemoveCreature(creature.id);
+          }
+        };
+
+        const handleCreaturePointerOver = (e: ThreeEvent<PointerEvent>) => {
+          e.stopPropagation();
+          if (isDeleteMode) {
+            setHoveredCreatureId(creature.id);
+            document.body.style.cursor = 'pointer';
+          }
+        };
+
+        const handleCreaturePointerOut = (e: ThreeEvent<PointerEvent>) => {
+          e.stopPropagation();
+          if (isDeleteMode) {
+            setHoveredCreatureId(null);
+            document.body.style.cursor = 'auto';
+          }
+        };
+
+        return (
+          <group
+            key={creature.id}
+            position={position}
+            quaternion={quaternion}
+            scale={creature.scale}
+            onClick={handleCreatureClick}
+            onPointerOver={handleCreaturePointerOver}
+            onPointerOut={handleCreaturePointerOut}
+          >
+            <CreatureComponent type={creature.type} position={[0, 0, 0]} scale={1} />
+            {isDeleteMode && isHovered && (
+              <mesh position={[0, 0.05, 0]}>
+                <ringGeometry args={[0.08, 0.1, 32]} />
                 <meshBasicMaterial color="#ef4444" transparent opacity={0.9} side={THREE.DoubleSide} />
               </mesh>
             )}

@@ -1,5 +1,6 @@
 export type BuildingType = 'forest' | 'glacier' | 'city' | 'grassland';
-export type ToolType = BuildingType | 'delete';
+export type CreatureType = 'bird' | 'squirrel' | 'deer' | 'butterfly' | 'rabbit' | 'penguin' | 'snowOwl' | 'pigeon';
+export type ToolType = BuildingType | CreatureType | 'delete';
 
 export type DisasterType = 'earthquake' | 'volcano' | 'flood' | 'meteor';
 
@@ -14,14 +15,31 @@ export interface Building {
   damaged: boolean;
 }
 
+export interface Creature {
+  id: string;
+  type: CreatureType;
+  position: [number, number, number];
+  scale: number;
+  rotation: [number, number, number];
+}
+
 export interface GameState {
   buildings: Building[];
+  creatures: Creature[];
   selectedTool: ToolType | null;
   lifeIndex: number;
   forestCount: number;
   glacierCount: number;
   cityCount: number;
   grasslandCount: number;
+  birdCount: number;
+  squirrelCount: number;
+  deerCount: number;
+  butterflyCount: number;
+  rabbitCount: number;
+  penguinCount: number;
+  snowOwlCount: number;
+  pigeonCount: number;
 }
 
 export interface BuildingConfig {
@@ -32,6 +50,16 @@ export interface BuildingConfig {
   lifeValue: number;
   description: string;
   baseHealth: number;
+}
+
+export interface CreatureConfig {
+  type: CreatureType;
+  name: string;
+  color: string;
+  icon: string;
+  lifeValue: number;
+  description: string;
+  biome: 'forest' | 'grassland' | 'glacier' | 'city';
 }
 
 export interface DisasterDamageInfo {

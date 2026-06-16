@@ -10,7 +10,17 @@ import { useDisasters } from './hooks/useDisasters';
 import { DayNightProvider } from './contexts/DayNightContext';
 
 function AppContent() {
-  const { gameState, selectTool, addBuilding, damageBuildings, removeBuildings, removeBuilding, resetBuildings } = useGameState();
+  const {
+    gameState,
+    selectTool,
+    addBuilding,
+    addCreature,
+    damageBuildings,
+    removeBuildings,
+    removeBuilding,
+    removeCreature,
+    resetBuildings,
+  } = useGameState();
   
   const {
     activeDisasters,
@@ -29,9 +39,12 @@ function AppContent() {
     <div className="w-full h-screen relative overflow-hidden bg-space-dark">
       <GameCanvas
         buildings={gameState.buildings}
+        creatures={gameState.creatures}
         selectedTool={gameState.selectedTool}
         onAddBuilding={addBuilding}
+        onAddCreature={addCreature}
         onRemoveBuilding={removeBuilding}
+        onRemoveCreature={removeCreature}
         lifeIndex={gameState.lifeIndex}
         disasters={activeDisasters}
       />

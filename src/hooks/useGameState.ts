@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { Building, BuildingType, GameState, ToolType } from '../types/game';
-import { generateId, calculateLifeIndex, PLANET_RADIUS, BUILDING_CONFIGS } from '../utils/helpers';
+import { Building, BuildingType, Creature, CreatureType, GameState, ToolType } from '../types/game';
+import { generateId, calculateLifeIndex, PLANET_RADIUS, BUILDING_CONFIGS, CREATURE_CONFIGS } from '../utils/helpers';
 
 function createInitialBuildings(): Building[] {
   const buildings: Building[] = [];
@@ -91,28 +91,51 @@ function createInitialBuildings(): Building[] {
   return buildings;
 }
 
-function updateCountsAndLifeIndex(buildings: Building[]) {
+function createInitialCreatures(): Creature[] {
+  const creatures: Creature[] = [];
+  return creatures;
+}
+
+function updateCountsAndLifeIndex(buildings: Building[], creatures: Creature[]) {
   const forestCount = buildings.filter(b => b.type === 'forest').length;
   const glacierCount = buildings.filter(b => b.type === 'glacier').length;
   const cityCount = buildings.filter(b => b.type === 'city').length;
   const grasslandCount = buildings.filter(b => b.type === 'grassland').length;
-  const lifeIndex = calculateLifeIndex(forestCount, glacierCount, cityCount, grasslandCount);
-  return { forestCount, glacierCount, cityCount, grasslandCount, lifeIndex };
+
+  const birdCount = creatures.filter(c => c.type === 'bird').length;
+  const squirrelCount = creatures.filter(c => c.type === 'squirrel').length;
+  const deerCount = creatures.filter(c => c.type === 'deer').length;
+  const butterflyCount = creatures.filter(c => c.type === 'butterfly').length;
+  const rabbitCount = creatures.filter(c => c.type === 'rabbit').length;
+  const penguinCount = creatures.filter(c => c.type === 'penguin').length;
+  const snowOwlCount = creatures.filter(c => c.type === 'snowOwl').length;
+  const pigeonCount = creatures.filter(c => c.type === 'pigeon').length;
+
+  const lifeIndex = calculateLifeIndex(
+    forestCount, glacierCount, cityCount, grasslandCount,
+    birdCount, squirrelCount, deerCount, butterflyCount,
+    rabbitCount, penguinCount, snowOwlCount, pigeonCount
+  );
+
+  return {
+    forestCount, glacierCount, cityCount, grasslandCount,
+    birdCount, squirrelCount, deerCount, butterflyCount,
+    rabbitCount, penguinCount, snowOwlCount, pigeonCount,
+    lifeIndex
+  };
 }
 
 export function useGameState() {
   const [gameState, setGameState] = useState<GameState>(() => {
     const initialBuildings = createInitialBuildings();
-    const { forestCount, glacierCount, cityCount, grasslandCount, lifeIndex } = updateCountsAndLifeIndex(initialBuildings);
+    const initialCreatures = createInitialCreatures();
+    const counts = updateCountsAndLifeIndex(initialBuildings, initialCreatures);
 
     return {
       buildings: initialBuildings,
+      creatures: initialCreatures,
       selectedTool: null,
-      lifeIndex,
-      forestCount,
-      glacierCount,
-      cityCount,
-      grasslandCount,
+      ...counts,
     };
   });
 
@@ -135,8 +158,24 @@ export function useGameState() {
 
     setGameState(prev => {
       const newBuildings = [...prev.buildings, building];
-      const counts = updateCountsAndLifeIndex(newBuildings);
+      const counts = updateCountsAndLifeIndex(newBuildings, prev.creatures);
       return { ...prev, buildings: newBuildings, ...counts };
+    });
+  }, []);
+
+  const addCreature = useCallback((type: CreatureType, position: [number, number, number]) => {
+    const creature: Creature = {
+      id: generateId(),
+      type,
+      position,
+      scale: 1,
+      rotation: [0, Math.random() * Math.PI * 2, 0],
+    };
+
+    setGameState(prev => {
+      const newCreatures = [...prev.creatures, creature];
+      const counts = updateCountsAndLifeIndex(prev.buildings, newCreatures);
+      return { ...prev, creatures: newCreatures, ...counts };
     });
   }, []);
 
@@ -155,7 +194,7 @@ export function useGameState() {
         }
         return b;
       });
-      const counts = updateCountsAndLifeIndex(newBuildings);
+      const counts = updateCountsAndLifeIndex(newBuildings, prev.creatures);
       return { ...prev, buildings: newBuildings, ...counts };
     });
   }, []);
@@ -164,7 +203,7 @@ export function useGameState() {
     setGameState(prev => {
       const idSet = new Set(ids);
       const newBuildings = prev.buildings.filter(b => !idSet.has(b.id));
-      const counts = updateCountsAndLifeIndex(newBuildings);
+      const counts = updateCountsAndLifeIndex(newBuildings, prev.creatures);
       return { ...prev, buildings: newBuildings, ...counts };
     });
   }, []);
@@ -172,8 +211,16 @@ export function useGameState() {
   const removeBuilding = useCallback((id: string) => {
     setGameState(prev => {
       const newBuildings = prev.buildings.filter(b => b.id !== id);
-      const counts = updateCountsAndLifeIndex(newBuildings);
+      const counts = updateCountsAndLifeIndex(newBuildings, prev.creatures);
       return { ...prev, buildings: newBuildings, ...counts };
+    });
+  }, []);
+
+  const removeCreature = useCallback((id: string) => {
+    setGameState(prev => {
+      const newCreatures = prev.creatures.filter(c => c.id !== id);
+      const counts = updateCountsAndLifeIndex(prev.buildings, newCreatures);
+      return { ...prev, creatures: newCreatures, ...counts };
     });
   }, []);
 
@@ -181,10 +228,19 @@ export function useGameState() {
     setGameState(prev => ({
       ...prev,
       buildings: [],
+      creatures: [],
       forestCount: 0,
       glacierCount: 0,
       cityCount: 0,
       grasslandCount: 0,
+      birdCount: 0,
+      squirrelCount: 0,
+      deerCount: 0,
+      butterflyCount: 0,
+      rabbitCount: 0,
+      penguinCount: 0,
+      snowOwlCount: 0,
+      pigeonCount: 0,
       lifeIndex: 0,
     }));
   }, []);
@@ -193,9 +249,11 @@ export function useGameState() {
     gameState,
     selectTool,
     addBuilding,
+    addCreature,
     damageBuildings,
     removeBuildings,
     removeBuilding,
+    removeCreature,
     resetBuildings,
   };
 }

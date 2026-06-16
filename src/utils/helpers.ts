@@ -1,4 +1,4 @@
-import { BuildingType, BuildingConfig, DisasterType, DisasterConfig, ToolType } from '../types/game';
+import { BuildingType, BuildingConfig, CreatureType, CreatureConfig, DisasterType, DisasterConfig, ToolType } from '../types/game';
 
 interface ToolConfig {
   type: ToolType;
@@ -45,6 +45,81 @@ export const BUILDING_CONFIGS: Record<BuildingType, BuildingConfig> = {
     lifeValue: 8,
     description: '翠绿的草地，覆盖大地',
     baseHealth: 60,
+  },
+};
+
+export const CREATURE_CONFIGS: Record<CreatureType, CreatureConfig> = {
+  bird: {
+    type: 'bird',
+    name: '小鸟',
+    color: '#4a3728',
+    icon: '🐦',
+    lifeValue: 2,
+    description: '森林中自由飞翔的小鸟',
+    biome: 'forest',
+  },
+  squirrel: {
+    type: 'squirrel',
+    name: '松鼠',
+    color: '#8b4513',
+    icon: '🐿️',
+    lifeValue: 2,
+    description: '活泼好动的森林小松鼠',
+    biome: 'forest',
+  },
+  deer: {
+    type: 'deer',
+    name: '小鹿',
+    color: '#8b6914',
+    icon: '🦌',
+    lifeValue: 3,
+    description: '优雅的森林精灵',
+    biome: 'forest',
+  },
+  butterfly: {
+    type: 'butterfly',
+    name: '蝴蝶',
+    color: '#ff69b4',
+    icon: '🦋',
+    lifeValue: 1,
+    description: '翩翩起舞的美丽蝴蝶',
+    biome: 'grassland',
+  },
+  rabbit: {
+    type: 'rabbit',
+    name: '兔子',
+    color: '#d4c4a8',
+    icon: '🐰',
+    lifeValue: 2,
+    description: '蹦蹦跳跳的可爱兔子',
+    biome: 'grassland',
+  },
+  penguin: {
+    type: 'penguin',
+    name: '企鹅',
+    color: '#1a1a2e',
+    icon: '🐧',
+    lifeValue: 2,
+    description: '摇摇摆摆的冰川企鹅',
+    biome: 'glacier',
+  },
+  snowOwl: {
+    type: 'snowOwl',
+    name: '雪鸮',
+    color: '#e8e0d0',
+    icon: '🦉',
+    lifeValue: 2,
+    description: '雪域中的白色精灵',
+    biome: 'glacier',
+  },
+  pigeon: {
+    type: 'pigeon',
+    name: '鸽子',
+    color: '#708090',
+    icon: '🕊️',
+    lifeValue: 1,
+    description: '城市中的和平使者',
+    biome: 'city',
   },
 };
 
@@ -211,13 +286,29 @@ export function calculateLifeIndex(
   forestCount: number,
   glacierCount: number,
   cityCount: number,
-  grasslandCount: number
+  grasslandCount: number,
+  birdCount: number,
+  squirrelCount: number,
+  deerCount: number,
+  butterflyCount: number,
+  rabbitCount: number,
+  penguinCount: number,
+  snowOwlCount: number,
+  pigeonCount: number
 ): number {
   const total =
     forestCount * 15 +
     glacierCount * 10 +
     cityCount * 20 +
-    grasslandCount * 8;
+    grasslandCount * 8 +
+    birdCount * 2 +
+    squirrelCount * 2 +
+    deerCount * 3 +
+    butterflyCount * 1 +
+    rabbitCount * 2 +
+    penguinCount * 2 +
+    snowOwlCount * 2 +
+    pigeonCount * 1;
   return Math.min(100, total / 5);
 }
 
@@ -243,6 +334,7 @@ export function getRandomDisasterInterval(type: DisasterType): number {
 
 export const TOOL_CONFIGS: Record<ToolType, ToolConfig> = {
   ...BUILDING_CONFIGS,
+  ...CREATURE_CONFIGS,
   delete: {
     type: 'delete',
     name: '删除',
@@ -250,4 +342,19 @@ export const TOOL_CONFIGS: Record<ToolType, ToolConfig> = {
     icon: '🗑️',
     description: '点击建筑即可删除',
   },
+};
+
+export function isBuildingType(type: ToolType): type is BuildingType {
+  return type in BUILDING_CONFIGS;
+}
+
+export function isCreatureType(type: ToolType): type is CreatureType {
+  return type in CREATURE_CONFIGS;
+}
+
+export const CREATURES_BY_BIOME: Record<string, CreatureType[]> = {
+  forest: ['bird', 'squirrel', 'deer'],
+  grassland: ['butterfly', 'rabbit'],
+  glacier: ['penguin', 'snowOwl'],
+  city: ['pigeon'],
 };
