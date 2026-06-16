@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { createGrassTexture } from '../../utils/texture';
 import { useDayNight } from '../../contexts/DayNightContext';
+import { Butterfly, Rabbit } from '../Creatures/Creatures';
 import * as THREE from 'three';
 
 interface BuildingProps {
@@ -420,6 +421,13 @@ export function Grassland({ position, scale = 1, rotation = [0, 0, 0] }: Buildin
           <meshStandardMaterial color="#888888" roughness={0.95} />
         </mesh>
       ))}
+
+      <Butterfly position={[0.1, 0.08, 0.05]} color="#ff69b4" speed={1.2} />
+      <Butterfly position={[-0.12, 0.1, 0.08]} color="#9c27b0" speed={0.9} />
+      <Butterfly position={[0.05, 0.06, -0.1]} color="#00bcd4" speed={1.1} />
+      <Butterfly position={[-0.08, 0.09, -0.06]} color="#ffeb3b" speed={1.0} />
+      <Rabbit position={[0.15, 0, 0.12]} />
+      <Rabbit position={[-0.12, 0, -0.1]} />
 
       {isNight && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>

@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { createBarkTexture, createGrassTexture } from '../../utils/texture';
 import { useDayNight } from '../../contexts/DayNightContext';
+import { FlockBirds, Squirrel, Deer } from '../Creatures/Creatures';
 import * as THREE from 'three';
 
 interface BuildingProps {
@@ -242,6 +243,11 @@ export function Forest({ position, scale = 1, rotation = [0, 0, 0] }: BuildingPr
           />
         </mesh>
       ))}
+
+      <FlockBirds center={[0, 0, 0]} count={4} colors={['#4a3728', '#8b4513', '#2c1810', '#6b3a2a']} />
+      <Squirrel position={[0.15, 0, 0.1]} />
+      <Squirrel position={[-0.1, 0, -0.15]} />
+      <Deer position={[-0.05, 0, 0.2]} />
 
       {isNight && fireflyData.map((firefly, i) => (
         <Firefly key={`firefly-${i}`} position={firefly.pos} color={firefly.color} />

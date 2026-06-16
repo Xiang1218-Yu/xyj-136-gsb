@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { createWindowTexture, createGrassTexture } from '../../utils/texture';
 import { useDayNight } from '../../contexts/DayNightContext';
+import { Pigeon } from '../Creatures/Creatures';
 import * as THREE from 'three';
 
 interface BuildingProps {
@@ -336,6 +337,10 @@ export function City({ position, scale = 1, rotation = [0, 0, 0] }: BuildingProp
           ))}
         </group>
       )}
+
+      <Pigeon position={[0.18, 0, 0.08]} />
+      <Pigeon position={[-0.08, 0, 0.15]} />
+      <Pigeon position={[0.05, 0, -0.18]} />
     </group>
   );
 }

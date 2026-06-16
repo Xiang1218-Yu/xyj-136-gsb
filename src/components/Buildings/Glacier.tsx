@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { createIceTexture } from '../../utils/texture';
 import { useDayNight } from '../../contexts/DayNightContext';
+import { Penguin, SnowOwl } from '../Creatures/Creatures';
 import * as THREE from 'three';
 
 interface BuildingProps {
@@ -268,6 +269,12 @@ export function Glacier({ position, scale = 1, rotation = [0, 0, 0] }: BuildingP
           />
         </mesh>
       ))}
+
+      <Penguin position={[0.15, 0, 0.1]} />
+      <Penguin position={[0.1, 0, 0.18]} />
+      <Penguin position={[-0.12, 0, 0.05]} />
+      <SnowOwl position={[-0.1, 0, -0.15]} flyRadius={0.2} />
+      <SnowOwl position={[0.05, 0, -0.1]} flyRadius={0.15} />
 
       {isNight && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]}>
