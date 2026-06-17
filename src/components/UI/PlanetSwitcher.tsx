@@ -8,7 +8,13 @@ interface PlanetSwitcherProps {
   onSwitchPlanet: (planetId: string) => void;
 }
 
+/**
+ * 星球切换面板组件
+ * 显示所有可用星球列表，支持点击切换当前查看的星球
+ * 每个星球显示名称、主题图标和生命指数
+ */
 export function PlanetSwitcher({ planets, currentPlanetId, onSwitchPlanet }: PlanetSwitcherProps) {
+  // 面板展开/折叠状态
   const [isExpanded, setIsExpanded] = useState(false);
 
   const currentPlanet = planets.find(p => p.id === currentPlanetId)!;

@@ -3,6 +3,10 @@ import * as THREE from 'three';
 import { Building, BuildingType, Creature, CreatureType, ToolType, PlanetState, PlanetThemeType, MultiPlanetGameState } from '../types/game';
 import { generateId, calculateLifeIndex, PLANET_RADIUS, BUILDING_CONFIGS, CREATURE_CONFIGS, PLANET_THEME_CONFIGS } from '../utils/helpers';
 
+/**
+ * 根据主题类型生成初始建筑配置
+ * 不同主题的星球有不同的初始建筑布局，符合该星球的生态特征
+ */
 function createInitialBuildings(theme: PlanetThemeType): Building[] {
   const buildings: Building[] = [];
 
@@ -65,6 +69,10 @@ function createInitialCreatures(): Creature[] {
   return [];
 }
 
+/**
+ * 统计建筑和生物数量，并计算生命指数
+ * 纯函数，避免重复的计数逻辑
+ */
 function updateCountsAndLifeIndex(buildings: Building[], creatures: Creature[]) {
   const forestCount = buildings.filter(b => b.type === 'forest').length;
   const glacierCount = buildings.filter(b => b.type === 'glacier').length;
@@ -94,6 +102,10 @@ function updateCountsAndLifeIndex(buildings: Building[], creatures: Creature[]) 
   };
 }
 
+/**
+ * 创建单个星球的初始状态
+ * 封装星球创建逻辑，确保每个星球都有独立的状态
+ */
 function createPlanet(id: string, name: string, theme: PlanetThemeType): PlanetState {
   const initialBuildings = createInitialBuildings(theme);
   const initialCreatures = createInitialCreatures();
@@ -109,6 +121,10 @@ function createPlanet(id: string, name: string, theme: PlanetThemeType): PlanetS
   };
 }
 
+/**
+ * 创建所有初始星球列表
+ * 目前包含五种不同主题的星球
+ */
 function createInitialPlanets(): PlanetState[] {
   return [
     createPlanet('planet-1', '翠绿星', 'forest'),
@@ -119,6 +135,11 @@ function createInitialPlanets(): PlanetState[] {
   ];
 }
 
+/**
+ * 多星球游戏状态管理 Hook
+ * 管理多个星球的状态，每个星球有独立的建造进度和生命指数
+ * 提供统一的操作接口，内部通过 updateCurrentPlanet 避免重复代码
+ */
 export function useGameState() {
   const [gameState, setGameState] = useState<MultiPlanetGameState>(() => {
     const planets = createInitialPlanets();
@@ -131,14 +152,25 @@ export function useGameState() {
 
   const currentPlanet = gameState.planets.find(p => p.id === gameState.currentPlanetId)!;
 
+  /**
+   * 选择/取消选择建造工具
+   */
   const selectTool = useCallback((tool: ToolType | null) => {
     setGameState(prev => ({ ...prev, selectedTool: tool }));
   }, []);
 
+  /**
+   * 切换当前查看/操作的星球
+   */
   const switchPlanet = useCallback((planetId: string) => {
     setGameState(prev => ({ ...prev, currentPlanetId: planetId }));
   }, []);
 
+  /**
+   * 更新当前星球状态的工具函数
+   * 所有修改当前星球的操作都通过此函数，避免重复编写 planets.map 逻辑
+   * 单一职责：只负责定位当前星球并应用更新
+   */
   const updateCurrentPlanet = useCallback((updater: (planet: PlanetState) => PlanetState) => {
     setGameState(prev => ({
       ...prev,
@@ -148,6 +180,9 @@ export function useGameState() {
     }));
   }, []);
 
+  /**
+   * 在当前星球上添加建筑
+   */
   const addBuilding = useCallback((type: BuildingType, position: [number, number, number]) => {
     const baseHealth = BUILDING_CONFIGS[type].baseHealth;
     const building: Building = {
@@ -168,6 +203,9 @@ export function useGameState() {
     });
   }, [updateCurrentPlanet]);
 
+  /**
+   * 在当前星球上添加生物
+   */
   const addCreature = useCallback((type: CreatureType, position: [number, number, number]) => {
     const creature: Creature = {
       id: generateId(),
@@ -184,6 +222,10 @@ export function useGameState() {
     });
   }, [updateCurrentPlanet]);
 
+  /**
+   * 对当前星球上的建筑造成伤害
+   * 由灾害系统调用，根据建筑类型和距离计算伤害
+   */
   const damageBuildings = useCallback((damages: { id: string; damage: number }[]) => {
     updateCurrentPlanet(prev => {
       const damageMap = new Map(damages.map(d => [d.id, d.damage]));
@@ -204,6 +246,10 @@ export function useGameState() {
     });
   }, [updateCurrentPlanet]);
 
+  /**
+   * 批量移除当前星球上的建筑
+   * 用于灾害导致建筑完全损毁的情况
+   */
   const removeBuildings = useCallback((ids: string[]) => {
     updateCurrentPlanet(prev => {
       const idSet = new Set(ids);
@@ -213,6 +259,10 @@ export function useGameState() {
     });
   }, [updateCurrentPlanet]);
 
+  /**
+   * 移除单个建筑
+   * 用于玩家手动删除建筑
+   */
   const removeBuilding = useCallback((id: string) => {
     updateCurrentPlanet(prev => {
       const newBuildings = prev.buildings.filter(b => b.id !== id);
@@ -221,6 +271,10 @@ export function useGameState() {
     });
   }, [updateCurrentPlanet]);
 
+  /**
+   * 移除单个生物
+   * 用于玩家手动删除生物
+   */
   const removeCreature = useCallback((id: string) => {
     updateCurrentPlanet(prev => {
       const newCreatures = prev.creatures.filter(c => c.id !== id);
@@ -229,6 +283,9 @@ export function useGameState() {
     });
   }, [updateCurrentPlanet]);
 
+  /**
+   * 重置当前星球的所有建筑和生物
+   */
   const resetBuildings = useCallback(() => {
     updateCurrentPlanet(prev => ({
       ...prev,
@@ -250,6 +307,9 @@ export function useGameState() {
     }));
   }, [updateCurrentPlanet]);
 
+  /**
+   * 重置所有星球到初始状态
+   */
   const resetAllPlanets = useCallback(() => {
     setGameState(prev => ({
       ...prev,

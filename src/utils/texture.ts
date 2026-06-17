@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import { PlanetThemeType } from '../types/game';
 
+/**
+ * 创建森林主题星球纹理
+ * 绿色为主色调，包含森林、陆地和水域的随机分布
+ */
 export function createPlanetTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
@@ -56,6 +60,10 @@ export function createPlanetTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+/**
+ * 创建沙漠主题星球纹理
+ * 金黄色为主色调，模拟沙丘和荒漠地貌
+ */
 function createDesertPlanetTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
@@ -109,6 +117,10 @@ function createDesertPlanetTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+/**
+ * 创建冰雪主题星球纹理
+ * 蓝白色为主色调，模拟冰川和雪地地貌
+ */
 function createIcePlanetTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
@@ -165,6 +177,10 @@ function createIcePlanetTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+/**
+ * 创建熔岩主题星球纹理
+ * 红橙色为主色调，模拟火山和岩浆地貌
+ */
 function createLavaPlanetTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
@@ -222,6 +238,10 @@ function createLavaPlanetTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+/**
+ * 创建海洋主题星球纹理
+ * 蓝色为主色调，模拟海洋和岛屿地貌
+ */
 function createOceanPlanetTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
@@ -281,6 +301,10 @@ function createOceanPlanetTexture(): THREE.CanvasTexture {
 
 const planetTextureCache: Partial<Record<PlanetThemeType, THREE.CanvasTexture>> = {};
 
+/**
+ * 根据主题类型创建星球纹理的统一入口
+ * 内部使用缓存机制，避免重复生成相同主题的纹理
+ */
 export function createThemedPlanetTexture(theme: PlanetThemeType): THREE.CanvasTexture {
   if (planetTextureCache[theme]) {
     return planetTextureCache[theme]!;
