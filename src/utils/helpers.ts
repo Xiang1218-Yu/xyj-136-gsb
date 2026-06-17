@@ -1,4 +1,5 @@
-import { BuildingType, BuildingConfig, CreatureType, CreatureConfig, DisasterType, DisasterConfig, ToolType } from '../types/game';
+import { BuildingType, BuildingConfig, CreatureType, CreatureConfig, DisasterType, DisasterConfig, ToolType, PlanetStyleId, PlanetStyleConfig, PlanetData, PlanetCounts, Building, Creature } from '../types/game';
+import * as THREE from 'three';
 
 interface ToolConfig {
   type: ToolType;
@@ -278,10 +279,104 @@ export const DISASTER_CONFIGS: Record<DisasterType, DisasterConfig> = {
 
 export const PLANET_RADIUS = 2;
 
+/* 星球风格配置：每种风格定义独特的视觉外观和初始建筑 */
+export const PLANET_STYLE_CONFIGS: Record<PlanetStyleId, PlanetStyleConfig> = {
+  terra: {
+    id: 'terra',
+    name: '盖亚星',
+    icon: '🌍',
+    description: '生机盎然的类地星球，拥有丰富的森林和草地',
+    surfaceGradient: ['#1a472a', '#2d5a27', '#3d6b35', '#8b7355', '#5d4e37'],
+    surfaceBlobColors: [
+      'rgba(34, 139, 34, 0.3)',
+      'rgba(85, 107, 47, 0.3)',
+      'rgba(139, 115, 85, 0.3)',
+      'rgba(70, 130, 180, 0.2)',
+    ],
+    atmosphereColor: '#a8d8ff',
+    atmosphereColor2: '#6ab0ff',
+    atmosphereColor3: '#4a9eff',
+    cloudOpacity: 0.45,
+    initialBuildings: [
+      { type: 'forest', positions: [[0.5, 1.5, 1.2], [-0.8, 1.0, 1.5], [1.2, 0.5, 1.3]] },
+      { type: 'glacier', positions: [[-0.3, 1.8, 0.8], [0.6, -1.6, 1.0]] },
+      { type: 'city', positions: [[1.5, 0.3, 1.0], [-1.0, -0.5, 1.5]] },
+      { type: 'grassland', positions: [[0.2, 1.2, 1.6], [-1.2, 0.8, 1.2], [0.8, -1.0, 1.5]] },
+    ],
+  },
+  volcanic: {
+    id: 'volcanic',
+    name: '炎核星',
+    icon: '🌋',
+    description: '炽热的火山星球，熔岩遍布地表',
+    surfaceGradient: ['#4a1a0a', '#8b2500', '#b84000', '#ff6a00', '#3d1a0a'],
+    surfaceBlobColors: [
+      'rgba(255, 69, 0, 0.4)',
+      'rgba(178, 34, 34, 0.3)',
+      'rgba(255, 140, 0, 0.3)',
+      'rgba(139, 0, 0, 0.3)',
+    ],
+    atmosphereColor: '#ff8c60',
+    atmosphereColor2: '#ff4500',
+    atmosphereColor3: '#cc2200',
+    cloudOpacity: 0.25,
+    initialBuildings: [
+      { type: 'city', positions: [[1.5, 0.3, 1.0], [-1.0, -0.5, 1.5], [0.3, 1.5, 1.0]] },
+      { type: 'forest', positions: [[-0.8, 1.0, 1.5]] },
+      { type: 'grassland', positions: [[0.2, 1.2, 1.6], [0.8, -1.0, 1.5]] },
+    ],
+  },
+  frozen: {
+    id: 'frozen',
+    name: '霜晶星',
+    icon: '🧊',
+    description: '永恒冰封的极寒星球，冰川覆盖大地',
+    surfaceGradient: ['#c8e6ff', '#a8d0f0', '#e0f0ff', '#b0c4de', '#dce8f5'],
+    surfaceBlobColors: [
+      'rgba(200, 230, 255, 0.4)',
+      'rgba(150, 200, 255, 0.3)',
+      'rgba(220, 240, 255, 0.3)',
+      'rgba(100, 180, 255, 0.2)',
+    ],
+    atmosphereColor: '#c8e6ff',
+    atmosphereColor2: '#87ceeb',
+    atmosphereColor3: '#5f9ea0',
+    cloudOpacity: 0.55,
+    initialBuildings: [
+      { type: 'glacier', positions: [[-0.3, 1.8, 0.8], [0.6, -1.6, 1.0], [1.0, 1.2, 0.8], [-0.5, -1.0, 1.5]] },
+      { type: 'forest', positions: [[0.5, 1.5, 1.2]] },
+      { type: 'city', positions: [[1.5, 0.3, 1.0]] },
+    ],
+  },
+  desert: {
+    id: 'desert',
+    name: '沙海星',
+    icon: '🏜️',
+    description: '广袤的沙漠星球，绿洲是生命的希望',
+    surfaceGradient: ['#c2a050', '#d4a840', '#e0c070', '#b89040', '#a08030'],
+    surfaceBlobColors: [
+      'rgba(210, 180, 100, 0.3)',
+      'rgba(180, 150, 80, 0.3)',
+      'rgba(230, 200, 120, 0.3)',
+      'rgba(160, 130, 60, 0.3)',
+    ],
+    atmosphereColor: '#ffe4b5',
+    atmosphereColor2: '#daa520',
+    atmosphereColor3: '#b8860b',
+    cloudOpacity: 0.2,
+    initialBuildings: [
+      { type: 'grassland', positions: [[0.2, 1.2, 1.6], [-1.2, 0.8, 1.2], [0.8, -1.0, 1.5], [-0.5, 1.5, 1.0]] },
+      { type: 'city', positions: [[1.5, 0.3, 1.0]] },
+      { type: 'forest', positions: [[-0.8, 1.0, 1.5]] },
+    ],
+  },
+};
+
 export function generateId(): string {
   return Math.random().toString(36).substring(2, 11);
 }
 
+/* 根据建筑和生物数量计算生命指数 */
 export function calculateLifeIndex(
   forestCount: number,
   glacierCount: number,
@@ -310,6 +405,75 @@ export function calculateLifeIndex(
     snowOwlCount * 2 +
     pigeonCount * 1;
   return Math.min(100, total / 5);
+}
+
+/* 根据建筑和生物列表更新计数和生命指数 */
+export function updateCountsAndLifeIndex(buildings: Building[], creatures: Creature[]): PlanetCounts {
+  const forestCount = buildings.filter(b => b.type === 'forest').length;
+  const glacierCount = buildings.filter(b => b.type === 'glacier').length;
+  const cityCount = buildings.filter(b => b.type === 'city').length;
+  const grasslandCount = buildings.filter(b => b.type === 'grassland').length;
+
+  const birdCount = creatures.filter(c => c.type === 'bird').length;
+  const squirrelCount = creatures.filter(c => c.type === 'squirrel').length;
+  const deerCount = creatures.filter(c => c.type === 'deer').length;
+  const butterflyCount = creatures.filter(c => c.type === 'butterfly').length;
+  const rabbitCount = creatures.filter(c => c.type === 'rabbit').length;
+  const penguinCount = creatures.filter(c => c.type === 'penguin').length;
+  const snowOwlCount = creatures.filter(c => c.type === 'snowOwl').length;
+  const pigeonCount = creatures.filter(c => c.type === 'pigeon').length;
+
+  const lifeIndex = calculateLifeIndex(
+    forestCount, glacierCount, cityCount, grasslandCount,
+    birdCount, squirrelCount, deerCount, butterflyCount,
+    rabbitCount, penguinCount, snowOwlCount, pigeonCount
+  );
+
+  return {
+    forestCount, glacierCount, cityCount, grasslandCount,
+    birdCount, squirrelCount, deerCount, butterflyCount,
+    rabbitCount, penguinCount, snowOwlCount, pigeonCount,
+    lifeIndex
+  };
+}
+
+/* 根据星球风格配置创建初始建筑列表 */
+export function createBuildingsFromStyle(styleId: PlanetStyleId): Building[] {
+  const style = PLANET_STYLE_CONFIGS[styleId];
+  const buildings: Building[] = [];
+
+  style.initialBuildings.forEach(({ type, positions }) => {
+    positions.forEach((pos, i) => {
+      const normalized = new THREE.Vector3(...pos).normalize().multiplyScalar(PLANET_RADIUS);
+      const baseHealth = BUILDING_CONFIGS[type].baseHealth;
+      buildings.push({
+        id: `${type}-${styleId}-${i}`,
+        type,
+        position: [normalized.x, normalized.y, normalized.z],
+        scale: 2,
+        rotation: [0, Math.random() * Math.PI * 2, 0],
+        health: baseHealth,
+        maxHealth: baseHealth,
+        damaged: false,
+      });
+    });
+  });
+
+  return buildings;
+}
+
+/* 创建一个新的星球数据 */
+export function createPlanetData(id: string, name: string, styleId: PlanetStyleId): PlanetData {
+  const buildings = createBuildingsFromStyle(styleId);
+  const counts = updateCountsAndLifeIndex(buildings, []);
+  return {
+    id,
+    name,
+    styleId,
+    buildings,
+    creatures: [],
+    counts,
+  };
 }
 
 export function getRandomDisasterType(): DisasterType {

@@ -6,6 +6,7 @@ import { DisasterAlert } from './components/UI/DisasterAlert';
 import { DisasterInfoPanel } from './components/UI/DisasterInfoPanel';
 import { TimeControlPanel } from './components/UI/TimeControlPanel';
 import { VolumeControl } from './components/UI/VolumeControl';
+import { PlanetSwitcher } from './components/UI/PlanetSwitcher';
 import { useGameState } from './hooks/useGameState';
 import { useDisasters } from './hooks/useDisasters';
 import { useAudio } from './hooks/useAudio';
@@ -15,6 +16,8 @@ import { useEffect, useRef } from 'react';
 function AppContent() {
   const {
     gameState,
+    activePlanet,
+    switchPlanet,
     selectTool,
     addBuilding,
     addCreature,
@@ -25,11 +28,61 @@ function AppContent() {
     resetBuildings,
   } = useGameState();
 
-  const audio = useAudio(gameState.lifeIndex, {
-    forestCount: gameState.forestCount,
-    glacierCount: gameState.glacierCount,
-    grasslandCount: gameState.grasslandCount,
-    cityCount: gameState.cityCount,
+  /* 当前星球不存在时显示加载状态 */
+  if (!activePlanet) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-space-dark">
+        <p className="text-white text-xl">加载中...</p>
+      </div>
+    );
+  }
+
+  return <AppWithPlanet
+    gameState={gameState}
+    activePlanet={activePlanet}
+    switchPlanet={switchPlanet}
+    selectTool={selectTool}
+    addBuilding={addBuilding}
+    addCreature={addCreature}
+    damageBuildings={damageBuildings}
+    removeBuildings={removeBuildings}
+    removeBuilding={removeBuilding}
+    removeCreature={removeCreature}
+    resetBuildings={resetBuildings}
+  />;
+}
+
+/* 包含活跃星球数据的主内容组件 */
+function AppWithPlanet({
+  gameState,
+  activePlanet,
+  switchPlanet,
+  selectTool,
+  addBuilding,
+  addCreature,
+  damageBuildings,
+  removeBuildings,
+  removeBuilding,
+  removeCreature,
+  resetBuildings,
+}: {
+  gameState: ReturnType<typeof useGameState>['gameState'];
+  activePlanet: NonNullable<ReturnType<typeof useGameState>['activePlanet']>;
+  switchPlanet: (id: string) => void;
+  selectTool: (tool: import('./types/game').ToolType | null) => void;
+  addBuilding: (type: import('./types/game').BuildingType, position: [number, number, number]) => void;
+  addCreature: (type: import('./types/game').CreatureType, position: [number, number, number]) => void;
+  damageBuildings: (damages: { id: string; damage: number }[]) => void;
+  removeBuildings: (ids: string[]) => void;
+  removeBuilding: (id: string) => void;
+  removeCreature: (id: string) => void;
+  resetBuildings: () => void;
+}) {
+  const audio = useAudio(activePlanet.counts.lifeIndex, {
+    forestCount: activePlanet.counts.forestCount,
+    glacierCount: activePlanet.counts.glacierCount,
+    grasslandCount: activePlanet.counts.grasslandCount,
+    cityCount: activePlanet.counts.cityCount,
   });
 
   const prevSelectedToolRef = useRef(gameState.selectedTool);
@@ -50,7 +103,7 @@ function AppContent() {
     triggerRandomDisaster,
     dismissWarning,
   } = useDisasters({
-    buildings: gameState.buildings,
+    buildings: activePlanet.buildings,
     onDamageBuildings: damageBuildings,
     onRemoveBuildings: removeBuildings,
   });
@@ -100,23 +153,31 @@ function AppContent() {
   return (
     <div className="w-full h-screen relative overflow-hidden bg-space-dark">
       <GameCanvas
-        buildings={gameState.buildings}
-        creatures={gameState.creatures}
+        buildings={activePlanet.buildings}
+        creatures={activePlanet.creatures}
         selectedTool={gameState.selectedTool}
         onAddBuilding={handleAddBuilding}
         onAddCreature={handleAddCreature}
         onRemoveBuilding={handleRemoveBuilding}
         onRemoveCreature={handleRemoveCreature}
-        lifeIndex={gameState.lifeIndex}
+        lifeIndex={activePlanet.counts.lifeIndex}
         disasters={activeDisasters}
+        styleId={activePlanet.styleId}
+      />
+
+      <PlanetSwitcher
+        planets={gameState.planets}
+        activePlanetId={gameState.activePlanetId}
+        onSwitchPlanet={switchPlanet}
       />
 
       <StatusBar
-        lifeIndex={gameState.lifeIndex}
-        forestCount={gameState.forestCount}
-        glacierCount={gameState.glacierCount}
-        cityCount={gameState.cityCount}
-        grasslandCount={gameState.grasslandCount}
+        planetName={activePlanet.name}
+        lifeIndex={activePlanet.counts.lifeIndex}
+        forestCount={activePlanet.counts.forestCount}
+        glacierCount={activePlanet.counts.glacierCount}
+        cityCount={activePlanet.counts.cityCount}
+        grasslandCount={activePlanet.counts.grasslandCount}
       />
 
       <BuildPanel

@@ -1,17 +1,19 @@
 import * as THREE from 'three';
+import { PlanetStyleId, PlanetStyleConfig } from '../types/game';
+import { PLANET_STYLE_CONFIGS } from './helpers';
 
-export function createPlanetTexture(): THREE.CanvasTexture {
+/* 根据星球风格配置生成程序化星球表面纹理 */
+export function createPlanetTexture(styleId: PlanetStyleId = 'terra'): THREE.CanvasTexture {
+  const style: PlanetStyleConfig = PLANET_STYLE_CONFIGS[styleId];
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
   canvas.height = 512;
   const ctx = canvas.getContext('2d')!;
 
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, '#1a472a');
-  gradient.addColorStop(0.3, '#2d5a27');
-  gradient.addColorStop(0.5, '#3d6b35');
-  gradient.addColorStop(0.7, '#8b7355');
-  gradient.addColorStop(1, '#5d4e37');
+  style.surfaceGradient.forEach((color, i) => {
+    gradient.addColorStop(i / (style.surfaceGradient.length - 1), color);
+  });
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -20,12 +22,7 @@ export function createPlanetTexture(): THREE.CanvasTexture {
     const x = Math.random() * canvas.width;
     const y = Math.random() * canvas.height;
     const radius = 30 + Math.random() * 80;
-    const colors = [
-      'rgba(34, 139, 34, 0.3)',
-      'rgba(85, 107, 47, 0.3)',
-      'rgba(139, 115, 85, 0.3)',
-      'rgba(70, 130, 180, 0.2)',
-    ];
+    const colors = style.surfaceBlobColors;
     const color = colors[Math.floor(Math.random() * colors.length)];
 
     const blobGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
@@ -43,7 +40,12 @@ export function createPlanetTexture(): THREE.CanvasTexture {
     const y = Math.random() * canvas.height;
     const size = 2 + Math.random() * 8;
     const shade = 0.7 + Math.random() * 0.3;
-    ctx.fillStyle = `rgba(${Math.floor(60 * shade)}, ${Math.floor(100 * shade)}, ${Math.floor(50 * shade)}, 0.4)`;
+
+    const baseR = parseInt(style.surfaceGradient[0].slice(1, 3), 16);
+    const baseG = parseInt(style.surfaceGradient[0].slice(3, 5), 16);
+    const baseB = parseInt(style.surfaceGradient[0].slice(5, 7), 16);
+
+    ctx.fillStyle = `rgba(${Math.floor(baseR * shade)}, ${Math.floor(baseG * shade)}, ${Math.floor(baseB * shade)}, 0.4)`;
     ctx.beginPath();
     ctx.ellipse(x, y, size, size * 0.5, Math.random() * Math.PI, 0, Math.PI * 2);
     ctx.fill();
@@ -55,6 +57,7 @@ export function createPlanetTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+/* 生成云层纹理（所有星球通用） */
 export function createCloudTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 512;
@@ -86,6 +89,7 @@ export function createCloudTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+/* 生成城市窗户纹理 */
 export function createWindowTexture(litRatio: number = 0.6): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 128;
@@ -129,6 +133,7 @@ export function createWindowTexture(litRatio: number = 0.6): THREE.CanvasTexture
   return texture;
 }
 
+/* 生成冰面纹理 */
 export function createIceTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
@@ -175,6 +180,7 @@ export function createIceTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+/* 生成草地纹理 */
 export function createGrassTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
@@ -209,6 +215,7 @@ export function createGrassTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+/* 生成树皮纹理 */
 export function createBarkTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 128;

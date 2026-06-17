@@ -4,6 +4,8 @@ export type ToolType = BuildingType | CreatureType | 'delete';
 
 export type DisasterType = 'earthquake' | 'volcano' | 'flood' | 'meteor';
 
+export type PlanetStyleId = 'terra' | 'volcanic' | 'frozen' | 'desert';
+
 export interface Building {
   id: string;
   type: BuildingType;
@@ -23,11 +25,21 @@ export interface Creature {
   rotation: [number, number, number];
 }
 
-export interface GameState {
-  buildings: Building[];
-  creatures: Creature[];
-  selectedTool: ToolType | null;
-  lifeIndex: number;
+export interface PlanetStyleConfig {
+  id: PlanetStyleId;
+  name: string;
+  icon: string;
+  description: string;
+  surfaceGradient: string[];
+  surfaceBlobColors: string[];
+  atmosphereColor: string;
+  atmosphereColor2: string;
+  atmosphereColor3: string;
+  cloudOpacity: number;
+  initialBuildings: { type: BuildingType; positions: [number, number, number][] }[];
+}
+
+export interface PlanetCounts {
   forestCount: number;
   glacierCount: number;
   cityCount: number;
@@ -40,6 +52,22 @@ export interface GameState {
   penguinCount: number;
   snowOwlCount: number;
   pigeonCount: number;
+  lifeIndex: number;
+}
+
+export interface PlanetData {
+  id: string;
+  name: string;
+  styleId: PlanetStyleId;
+  buildings: Building[];
+  creatures: Creature[];
+  counts: PlanetCounts;
+}
+
+export interface GameState {
+  planets: PlanetData[];
+  activePlanetId: string;
+  selectedTool: ToolType | null;
 }
 
 export interface BuildingConfig {
@@ -106,4 +134,3 @@ export interface DisasterWarning {
   estimatedIntensity: number;
   timestamp: number;
 }
-
