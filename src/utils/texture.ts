@@ -1,32 +1,57 @@
 import * as THREE from 'three';
+import { PlanetStyle } from '../types/game';
+import { PLANET_STYLES } from '../utils/helpers';
 
-export function createPlanetTexture(): THREE.CanvasTexture {
+/**
+ * 将十六进制颜色转换为 RGBA 字符串
+ */
+function hexToRgba(hex: string, alpha: number = 1): string {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (result) {
+    const r = parseInt(result[1], 16);
+    const g = parseInt(result[2], 16);
+    const b = parseInt(result[3], 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  return `rgba(255, 255, 255, ${alpha})`;
+}
+
+/**
+ * 根据星球风格生成星球表面纹理
+ *
+ * @param style 星球视觉风格配置
+ * @returns 生成的 Canvas 纹理
+ */
+export function createPlanetTexture(style: PlanetStyle = PLANET_STYLES.earth): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
   canvas.height = 512;
   const ctx = canvas.getContext('2d')!;
 
+  // 根据风格生成渐变背景
   const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, '#1a472a');
-  gradient.addColorStop(0.3, '#2d5a27');
-  gradient.addColorStop(0.5, '#3d6b35');
-  gradient.addColorStop(0.7, '#8b7355');
-  gradient.addColorStop(1, '#5d4e37');
+  gradient.addColorStop(0, style.baseColor);
+  gradient.addColorStop(0.3, style.primaryColor);
+  gradient.addColorStop(0.5, style.vibrantColor);
+  gradient.addColorStop(0.7, style.secondaryColor);
+  gradient.addColorStop(1, style.tertiaryColor);
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 根据风格添加色斑
+  const blobColors = [
+    hexToRgba(style.primaryColor, 0.3),
+    hexToRgba(style.secondaryColor, 0.3),
+    hexToRgba(style.tertiaryColor, 0.25),
+    hexToRgba(style.vibrantColor, 0.2),
+  ];
 
   for (let i = 0; i < 50; i++) {
     const x = Math.random() * canvas.width;
     const y = Math.random() * canvas.height;
     const radius = 30 + Math.random() * 80;
-    const colors = [
-      'rgba(34, 139, 34, 0.3)',
-      'rgba(85, 107, 47, 0.3)',
-      'rgba(139, 115, 85, 0.3)',
-      'rgba(70, 130, 180, 0.2)',
-    ];
-    const color = colors[Math.floor(Math.random() * colors.length)];
+    const color = blobColors[Math.floor(Math.random() * blobColors.length)];
 
     const blobGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
     blobGradient.addColorStop(0, color);
@@ -38,12 +63,25 @@ export function createPlanetTexture(): THREE.CanvasTexture {
     ctx.fill();
   }
 
+  // 添加细节纹理
+  const detailColor = hexToRgba(style.primaryColor, 0.4);
   for (let i = 0; i < 200; i++) {
     const x = Math.random() * canvas.width;
     const y = Math.random() * canvas.height;
     const size = 2 + Math.random() * 8;
     const shade = 0.7 + Math.random() * 0.3;
-    ctx.fillStyle = `rgba(${Math.floor(60 * shade)}, ${Math.floor(100 * shade)}, ${Math.floor(50 * shade)}, 0.4)`;
+
+    // 使用主色调并调整明暗
+    const baseRgb = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(style.primaryColor);
+    if (baseRgb) {
+      const r = Math.floor(parseInt(baseRgb[1], 16) * shade);
+      const g = Math.floor(parseInt(baseRgb[2], 16) * shade);
+      const b = Math.floor(parseInt(baseRgb[3], 16) * shade);
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.4)`;
+    } else {
+      ctx.fillStyle = detailColor;
+    }
+
     ctx.beginPath();
     ctx.ellipse(x, y, size, size * 0.5, Math.random() * Math.PI, 0, Math.PI * 2);
     ctx.fill();
@@ -55,7 +93,13 @@ export function createPlanetTexture(): THREE.CanvasTexture {
   return texture;
 }
 
-export function createCloudTexture(): THREE.CanvasTexture {
+/**
+ * 生成云层纹理
+ *
+ * @param cloudColor 云层颜色（十六进制）
+ * @returns 生成的 Canvas 纹理
+ */
+export function createCloudTexture(cloudColor: string = '#ffffff'): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 512;
   canvas.height = 256;
@@ -70,9 +114,9 @@ export function createCloudTexture(): THREE.CanvasTexture {
     const radius = 20 + Math.random() * 60;
 
     const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
-    gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)');
-    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    gradient.addColorStop(0, hexToRgba(cloudColor, 0.6));
+    gradient.addColorStop(0.5, hexToRgba(cloudColor, 0.3));
+    gradient.addColorStop(1, hexToRgba(cloudColor, 0));
 
     ctx.fillStyle = gradient;
     ctx.beginPath();

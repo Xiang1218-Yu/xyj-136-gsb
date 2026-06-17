@@ -1,4 +1,5 @@
-import { BuildingType, BuildingConfig, CreatureType, CreatureConfig, DisasterType, DisasterConfig, ToolType } from '../types/game';
+import * as THREE from 'three';
+import { BuildingType, BuildingConfig, CreatureType, CreatureConfig, DisasterType, DisasterConfig, ToolType, PlanetId, PlanetStyle, PlanetData, Building, Creature } from '../types/game';
 
 interface ToolConfig {
   type: ToolType;
@@ -358,3 +359,202 @@ export const CREATURES_BY_BIOME: Record<string, CreatureType[]> = {
   glacier: ['penguin', 'snowOwl'],
   city: ['pigeon'],
 };
+
+/**
+ * 星球视觉风格配置
+ * 每个星球拥有独特的外观主题
+ */
+export const PLANET_STYLES: Record<PlanetId, PlanetStyle> = {
+  earth: {
+    id: 'earth',
+    name: '地球',
+    description: '蓝色星球，生命的摇篮',
+    icon: '🌍',
+    baseColor: '#1a472a',
+    primaryColor: '#2d5a27',
+    secondaryColor: '#8b7355',
+    tertiaryColor: '#5d4e37',
+    vibrantColor: '#3d6b35',
+    atmosphereColor: '#a8d8ff',
+    cloudColor: '#ffffff',
+    hasClouds: true,
+    terrainHeight: 0.015,
+    lifeTint: { r: 0.15, g: 0.35, b: 0.05 },
+  },
+  mars: {
+    id: 'mars',
+    name: '火星',
+    description: '红色荒漠，等待被唤醒',
+    icon: '🔴',
+    baseColor: '#5c2b0e',
+    primaryColor: '#8b4513',
+    secondaryColor: '#cd853f',
+    tertiaryColor: '#a0522d',
+    vibrantColor: '#b8860b',
+    atmosphereColor: '#ffb380',
+    cloudColor: '#ffe4c4',
+    hasClouds: false,
+    terrainHeight: 0.025,
+    lifeTint: { r: 0.2, g: 0.25, b: -0.1 },
+  },
+  ice: {
+    id: 'ice',
+    name: '冰冻星',
+    description: '冰雪世界，纯净而寒冷',
+    icon: '🧊',
+    baseColor: '#b0e0e6',
+    primaryColor: '#87ceeb',
+    secondaryColor: '#add8e6',
+    tertiaryColor: '#e0ffff',
+    vibrantColor: '#48d1cc',
+    atmosphereColor: '#e0ffff',
+    cloudColor: '#f0ffff',
+    hasClouds: true,
+    terrainHeight: 0.01,
+    lifeTint: { r: -0.05, g: 0.2, b: 0.3 },
+  },
+  desert: {
+    id: 'desert',
+    name: '沙漠星',
+    description: '金色沙丘，烈日当空',
+    icon: '🏜️',
+    baseColor: '#c19a6b',
+    primaryColor: '#daa520',
+    secondaryColor: '#f4a460',
+    tertiaryColor: '#cd853f',
+    vibrantColor: '#90ee90',
+    atmosphereColor: '#ffe4b5',
+    cloudColor: '#fff8dc',
+    hasClouds: false,
+    terrainHeight: 0.02,
+    lifeTint: { r: -0.05, g: 0.3, b: -0.05 },
+  },
+  ocean: {
+    id: 'ocean',
+    name: '海洋星',
+    description: '蔚蓝海洋，生命从水中诞生',
+    icon: '🌊',
+    baseColor: '#000080',
+    primaryColor: '#0066cc',
+    secondaryColor: '#008080',
+    tertiaryColor: '#004d66',
+    vibrantColor: '#20b2aa',
+    atmosphereColor: '#87ceeb',
+    cloudColor: '#e0ffff',
+    hasClouds: true,
+    terrainHeight: 0.008,
+    lifeTint: { r: 0.1, g: 0.25, b: 0.15 },
+  },
+};
+
+/**
+ * 根据建筑和生物列表更新计数与生命指数
+ * 纯函数，便于复用
+ */
+export function updateCountsAndLifeIndex(buildings: Building[], creatures: Creature[]) {
+  const forestCount = buildings.filter(b => b.type === 'forest').length;
+  const glacierCount = buildings.filter(b => b.type === 'glacier').length;
+  const cityCount = buildings.filter(b => b.type === 'city').length;
+  const grasslandCount = buildings.filter(b => b.type === 'grassland').length;
+
+  const birdCount = creatures.filter(c => c.type === 'bird').length;
+  const squirrelCount = creatures.filter(c => c.type === 'squirrel').length;
+  const deerCount = creatures.filter(c => c.type === 'deer').length;
+  const butterflyCount = creatures.filter(c => c.type === 'butterfly').length;
+  const rabbitCount = creatures.filter(c => c.type === 'rabbit').length;
+  const penguinCount = creatures.filter(c => c.type === 'penguin').length;
+  const snowOwlCount = creatures.filter(c => c.type === 'snowOwl').length;
+  const pigeonCount = creatures.filter(c => c.type === 'pigeon').length;
+
+  const lifeIndex = calculateLifeIndex(
+    forestCount, glacierCount, cityCount, grasslandCount,
+    birdCount, squirrelCount, deerCount, butterflyCount,
+    rabbitCount, penguinCount, snowOwlCount, pigeonCount
+  );
+
+  return {
+    forestCount, glacierCount, cityCount, grasslandCount,
+    birdCount, squirrelCount, deerCount, butterflyCount,
+    rabbitCount, penguinCount, snowOwlCount, pigeonCount,
+    lifeIndex
+  };
+}
+
+/**
+ * 创建指定星球的初始建筑
+ * 不同星球拥有不同的初始布局
+ */
+function createInitialBuildingsForPlanet(planetId: PlanetId): Building[] {
+  const buildings: Building[] = [];
+
+  const basePositionsByPlanet: Record<PlanetId, { type: BuildingType; positions: [number, number, number][] }[]> = {
+    earth: [
+      { type: 'forest', positions: [[0.5, 1.5, 1.2], [-0.8, 1.0, 1.5], [1.2, 0.5, 1.3]] },
+      { type: 'glacier', positions: [[-0.3, 1.8, 0.8], [0.6, -1.6, 1.0]] },
+      { type: 'city', positions: [[1.5, 0.3, 1.0], [-1.0, -0.5, 1.5]] },
+      { type: 'grassland', positions: [[0.2, 1.2, 1.6], [-1.2, 0.8, 1.2], [0.8, -1.0, 1.5]] },
+    ],
+    mars: [
+      { type: 'city', positions: [[1.2, 0.2, 1.2]] },
+      { type: 'glacier', positions: [[-0.2, 1.8, 0.6]] },
+      { type: 'grassland', positions: [[0.5, -1.2, 1.3]] },
+    ],
+    ice: [
+      { type: 'glacier', positions: [[0.3, 1.6, 1.0], [-0.6, 1.2, 1.3], [0.8, -1.4, 1.1], [-0.9, -0.8, 1.4]] },
+      { type: 'city', positions: [[1.4, 0.1, 0.9]] },
+    ],
+    desert: [
+      { type: 'city', positions: [[1.3, 0.4, 1.0], [-1.1, -0.3, 1.3]] },
+      { type: 'grassland', positions: [[0.4, 1.3, 1.4]] },
+      { type: 'glacier', positions: [[-0.1, 1.9, 0.5]] },
+    ],
+    ocean: [
+      { type: 'grassland', positions: [[0.6, 1.4, 1.1], [-0.7, 0.9, 1.4]] },
+      { type: 'forest', positions: [[1.1, 0.3, 1.4]] },
+      { type: 'city', positions: [[-1.2, -0.4, 1.2]] },
+    ],
+  };
+
+  const configs = basePositionsByPlanet[planetId] || [];
+  let buildingIndex = 0;
+
+  configs.forEach(({ type, positions }) => {
+    positions.forEach((pos) => {
+      const normalized = new THREE.Vector3(...pos).normalize().multiplyScalar(PLANET_RADIUS);
+      const baseHealth = BUILDING_CONFIGS[type]?.baseHealth || 80;
+      buildings.push({
+        id: `${planetId}-${type}-${buildingIndex++}`,
+        type,
+        position: [normalized.x, normalized.y, normalized.z],
+        scale: 2,
+        rotation: [0, Math.random() * Math.PI * 2, 0],
+        health: baseHealth,
+        maxHealth: baseHealth,
+        damaged: false,
+      });
+    });
+  });
+
+  return buildings;
+}
+
+/**
+ * 创建指定星球的初始数据
+ */
+export function createInitialPlanetData(planetId: PlanetId): PlanetData {
+  const buildings = createInitialBuildingsForPlanet(planetId);
+  const creatures: Creature[] = [];
+  const counts = updateCountsAndLifeIndex(buildings, creatures);
+
+  return {
+    planetId,
+    buildings,
+    creatures,
+    ...counts,
+  };
+}
+
+/**
+ * 获取所有可用的星球 ID 列表
+ */
+export const PLANET_IDS: PlanetId[] = ['earth', 'mars', 'ice', 'desert', 'ocean'];

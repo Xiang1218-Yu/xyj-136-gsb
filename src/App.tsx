@@ -6,6 +6,7 @@ import { DisasterAlert } from './components/UI/DisasterAlert';
 import { DisasterInfoPanel } from './components/UI/DisasterInfoPanel';
 import { TimeControlPanel } from './components/UI/TimeControlPanel';
 import { VolumeControl } from './components/UI/VolumeControl';
+import { PlanetSelector } from './components/UI/PlanetSelector';
 import { useGameState } from './hooks/useGameState';
 import { useDisasters } from './hooks/useDisasters';
 import { useAudio } from './hooks/useAudio';
@@ -23,6 +24,9 @@ function AppContent() {
     removeBuilding,
     removeCreature,
     resetBuildings,
+    currentPlanetId,
+    allPlanets,
+    switchPlanet,
   } = useGameState();
 
   const audio = useAudio(gameState.lifeIndex, {
@@ -109,6 +113,14 @@ function AppContent() {
         onRemoveCreature={handleRemoveCreature}
         lifeIndex={gameState.lifeIndex}
         disasters={activeDisasters}
+        planetId={currentPlanetId}
+      />
+
+      {/* 星球选择器 */}
+      <PlanetSelector
+        currentPlanetId={currentPlanetId}
+        planets={allPlanets}
+        onSwitchPlanet={switchPlanet}
       />
 
       <StatusBar
