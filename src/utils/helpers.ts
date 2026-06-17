@@ -309,7 +309,7 @@ export const PLANET_STYLE_CONFIGS: Record<PlanetStyleId, PlanetStyleConfig> = {
     name: '炎核星',
     icon: '🌋',
     description: '炽热的火山星球，熔岩遍布地表',
-    surfaceGradient: ['#4a1a0a', '#8b2500', '#b8400', '#ff6a00', '#3d1a0a'],
+    surfaceGradient: ['#4a1a0a', '#8b2500', '#b84000', '#ff6a00', '#3d1a0a'],
     surfaceBlobColors: [
       'rgba(255, 69, 0, 0.4)',
       'rgba(178, 34, 34, 0.3)',

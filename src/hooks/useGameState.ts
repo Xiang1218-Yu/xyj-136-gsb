@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Building, BuildingType, Creature, CreatureType, GameState, ToolType, PlanetStyleId, PlanetData, PlanetCounts } from '../types/game';
-import { generateId, calculateLifeIndex, PLANET_RADIUS, BUILDING_CONFIGS, CREATURE_CONFIGS, updateCountsAndLifeIndex, createPlanetData } from '../utils/helpers';
+import { generateId, PLANET_RADIUS, BUILDING_CONFIGS, updateCountsAndLifeIndex, createPlanetData } from '../utils/helpers';
 
 /* 创建初始星球列表，包含4个不同风格的星球 */
 function createInitialPlanets(): PlanetData[] {
@@ -15,6 +15,25 @@ const PLANET_STYLE_NAMES: Record<PlanetStyleId, string> = {
   frozen: '霜晶星',
   desert: '沙海星',
 };
+
+/**
+ * 通用辅助函数：仅更新当前活跃星球的建筑/生物，并自动重算计数和生命指数。
+ * 所有只涉及修改 buildings/creatures 的操作都通过此函数消除重复的 map + filter + updateCounts 模式。
+ */
+function updateActivePlanet(
+  prev: GameState,
+  updater: (planet: PlanetData) => Partial<Pick<PlanetData, 'buildings' | 'creatures'>>
+): GameState {
+  const newPlanets = prev.planets.map(planet => {
+    if (planet.id !== prev.activePlanetId) return planet;
+    const changes = updater(planet);
+    const buildings = changes.buildings ?? planet.buildings;
+    const creatures = changes.creatures ?? planet.creatures;
+    const counts = updateCountsAndLifeIndex(buildings, creatures);
+    return { ...planet, ...changes, counts };
+  });
+  return { ...prev, planets: newPlanets };
+}
 
 export function useGameState() {
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -55,15 +74,9 @@ export function useGameState() {
       damaged: false,
     };
 
-    setGameState(prev => {
-      const newPlanets = prev.planets.map(planet => {
-        if (planet.id !== prev.activePlanetId) return planet;
-        const newBuildings = [...planet.buildings, building];
-        const counts = updateCountsAndLifeIndex(newBuildings, planet.creatures);
-        return { ...planet, buildings: newBuildings, counts };
-      });
-      return { ...prev, planets: newPlanets };
-    });
+    setGameState(prev => updateActivePlanet(prev, planet => ({
+      buildings: [...planet.buildings, building],
+    })));
   }, [activePlanet]);
 
   /* 在当前星球上添加生物 */
@@ -78,76 +91,47 @@ export function useGameState() {
       rotation: [0, Math.random() * Math.PI * 2, 0],
     };
 
-    setGameState(prev => {
-      const newPlanets = prev.planets.map(planet => {
-        if (planet.id !== prev.activePlanetId) return planet;
-        const newCreatures = [...planet.creatures, creature];
-        const counts = updateCountsAndLifeIndex(planet.buildings, newCreatures);
-        return { ...planet, creatures: newCreatures, counts };
-      });
-      return { ...prev, planets: newPlanets };
-    });
+    setGameState(prev => updateActivePlanet(prev, planet => ({
+      creatures: [...planet.creatures, creature],
+    })));
   }, [activePlanet]);
 
   /* 对当前星球的建筑造成伤害（灾害系统调用） */
   const damageBuildings = useCallback((damages: { id: string; damage: number }[]) => {
-    setGameState(prev => {
+    setGameState(prev => updateActivePlanet(prev, planet => {
       const damageMap = new Map(damages.map(d => [d.id, d.damage]));
-      const newPlanets = prev.planets.map(planet => {
-        if (planet.id !== prev.activePlanetId) return planet;
-        const newBuildings = planet.buildings.map(b => {
-          const damage = damageMap.get(b.id);
-          if (damage !== undefined) {
-            const newHealth = Math.max(0, b.health - damage);
-            return { ...b, health: newHealth, damaged: newHealth < b.maxHealth * 0.6 };
-          }
-          return b;
-        });
-        const counts = updateCountsAndLifeIndex(newBuildings, planet.creatures);
-        return { ...planet, buildings: newBuildings, counts };
+      const newBuildings = planet.buildings.map(b => {
+        const damage = damageMap.get(b.id);
+        if (damage !== undefined) {
+          const newHealth = Math.max(0, b.health - damage);
+          return { ...b, health: newHealth, damaged: newHealth < b.maxHealth * 0.6 };
+        }
+        return b;
       });
-      return { ...prev, planets: newPlanets };
-    });
+      return { buildings: newBuildings };
+    }));
   }, []);
 
   /* 批量删除当前星球的建筑（灾害摧毁） */
   const removeBuildings = useCallback((ids: string[]) => {
-    setGameState(prev => {
+    setGameState(prev => updateActivePlanet(prev, planet => {
       const idSet = new Set(ids);
-      const newPlanets = prev.planets.map(planet => {
-        if (planet.id !== prev.activePlanetId) return planet;
-        const newBuildings = planet.buildings.filter(b => !idSet.has(b.id));
-        const counts = updateCountsAndLifeIndex(newBuildings, planet.creatures);
-        return { ...planet, buildings: newBuildings, counts };
-      });
-      return { ...prev, planets: newPlanets };
-    });
+      return { buildings: planet.buildings.filter(b => !idSet.has(b.id)) };
+    }));
   }, []);
 
   /* 删除当前星球的单个建筑 */
   const removeBuilding = useCallback((id: string) => {
-    setGameState(prev => {
-      const newPlanets = prev.planets.map(planet => {
-        if (planet.id !== prev.activePlanetId) return planet;
-        const newBuildings = planet.buildings.filter(b => b.id !== id);
-        const counts = updateCountsAndLifeIndex(newBuildings, planet.creatures);
-        return { ...planet, buildings: newBuildings, counts };
-      });
-      return { ...prev, planets: newPlanets };
-    });
+    setGameState(prev => updateActivePlanet(prev, planet => ({
+      buildings: planet.buildings.filter(b => b.id !== id),
+    })));
   }, []);
 
   /* 删除当前星球的单个生物 */
   const removeCreature = useCallback((id: string) => {
-    setGameState(prev => {
-      const newPlanets = prev.planets.map(planet => {
-        if (planet.id !== prev.activePlanetId) return planet;
-        const newCreatures = planet.creatures.filter(c => c.id !== id);
-        const counts = updateCountsAndLifeIndex(planet.buildings, newCreatures);
-        return { ...planet, creatures: newCreatures, counts };
-      });
-      return { ...prev, planets: newPlanets };
-    });
+    setGameState(prev => updateActivePlanet(prev, planet => ({
+      creatures: planet.creatures.filter(c => c.id !== id),
+    })));
   }, []);
 
   /* 重置当前星球的所有建筑和生物 */
@@ -157,8 +141,7 @@ export function useGameState() {
     setGameState(prev => {
       const newPlanets = prev.planets.map(planet => {
         if (planet.id !== prev.activePlanetId) return planet;
-        const resetPlanet = createPlanetData(planet.id, planet.name, planet.styleId);
-        return resetPlanet;
+        return createPlanetData(planet.id, planet.name, planet.styleId);
       });
       return { ...prev, planets: newPlanets };
     });

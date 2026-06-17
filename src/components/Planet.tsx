@@ -87,6 +87,85 @@ function AtmosphereLayers({ styleId }: { styleId: PlanetStyleId }) {
   );
 }
 
+/* 建筑类型到组件的映射，避免 if-else 链 */
+const BUILDING_COMPONENT_MAP: Record<string, React.FC<{ position: [number, number, number]; scale: number }>> = {
+  forest: Forest,
+  glacier: Glacier,
+  city: City,
+  grassland: Grassland,
+};
+
+/* 星球表面放置项的通用组件，统一处理建筑和生物的定位、删除交互、悬浮指示 */
+function SurfaceItem({
+  id,
+  position: rawPosition,
+  scale,
+  isDeleteMode,
+  hoveredId,
+  onHoverChange,
+  onRemove,
+  children,
+  deleteRingY = 0.05,
+  deleteRingSize = [0.15, 0.17] as [number, number],
+}: {
+  id: string;
+  position: [number, number, number];
+  scale: number;
+  isDeleteMode: boolean;
+  hoveredId: string | null;
+  onHoverChange: (id: string | null) => void;
+  onRemove: (id: string) => void;
+  children: React.ReactNode;
+  deleteRingY?: number;
+  deleteRingSize?: [number, number];
+}) {
+  const normal = new THREE.Vector3(...rawPosition).normalize();
+  const surfacePos = normal.clone().multiplyScalar(PLANET_RADIUS + 0.03);
+  const position: [number, number, number] = [surfacePos.x, surfacePos.y, surfacePos.z];
+  const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+  const isHovered = hoveredId === id;
+
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (isDeleteMode) onRemove(id);
+  };
+
+  const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    if (isDeleteMode) {
+      onHoverChange(id);
+      document.body.style.cursor = 'pointer';
+    }
+  };
+
+  const handlePointerOut = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    if (isDeleteMode) {
+      onHoverChange(null);
+      document.body.style.cursor = 'auto';
+    }
+  };
+
+  return (
+    <group
+      position={position}
+      quaternion={quaternion}
+      scale={scale}
+      onClick={handleClick}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
+    >
+      {children}
+      {isDeleteMode && isHovered && (
+        <mesh position={[0, deleteRingY, 0]}>
+          <ringGeometry args={[deleteRingSize[0], deleteRingSize[1], 32]} />
+          <meshBasicMaterial color="#ef4444" transparent opacity={0.9} side={THREE.DoubleSide} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
 export function Planet({
   onClick, onPointerOver, onPointerOut, onRemoveBuilding, onRemoveCreature,
   selectedTool, lifeIndex, buildings = [], creatures = [], disasters = [],
@@ -96,8 +175,7 @@ export function Planet({
   const planetRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
   const terrainRef = useRef<THREE.Mesh>(null);
-  const [hoveredBuildingId, setHoveredBuildingId] = useState<string | null>(null);
-  const [hoveredCreatureId, setHoveredCreatureId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   /* 根据星球风格生成纹理 */
   const planetTexture = useMemo(() => createPlanetTexture(styleId), [styleId]);
@@ -113,25 +191,15 @@ export function Planet({
     const t = lifeIndex / 100;
     if (planetRef.current) {
       const mat = planetRef.current.material as THREE.MeshStandardMaterial;
-      mat.color.setRGB(
-        0.35 + t * 0.15,
-        0.3 + t * 0.35,
-        0.4 + t * 0.05
-      );
+      mat.color.setRGB(0.35 + t * 0.15, 0.3 + t * 0.35, 0.4 + t * 0.05);
     }
   }, [lifeIndex]);
 
   /* 星球自转动画 */
   useFrame((state, delta) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.03;
-    }
-    if (cloudsRef.current) {
-      cloudsRef.current.rotation.y += delta * 0.015;
-    }
-    if (terrainRef.current) {
-      terrainRef.current.rotation.y += delta * 0.03;
-    }
+    if (groupRef.current) groupRef.current.rotation.y += delta * 0.03;
+    if (cloudsRef.current) cloudsRef.current.rotation.y += delta * 0.015;
+    if (terrainRef.current) terrainRef.current.rotation.y += delta * 0.03;
   });
 
   /* 点击星球表面，转换到局部坐标 */
@@ -144,6 +212,7 @@ export function Planet({
   };
 
   const style = PLANET_STYLE_CONFIGS[styleId];
+  const isDeleteMode = selectedTool === 'delete';
 
   return (
     <group ref={groupRef}>
@@ -156,158 +225,70 @@ export function Planet({
         receiveShadow
       >
         <sphereGeometry args={[PLANET_RADIUS, 128, 128]} />
-        <meshStandardMaterial
-          map={planetTexture}
-          roughness={0.85}
-          metalness={0.05}
-        />
+        <meshStandardMaterial map={planetTexture} roughness={0.85} metalness={0.05} />
       </mesh>
 
       <mesh ref={terrainRef} receiveShadow>
         <primitive object={terrainGeometry} attach="geometry" />
-        <meshStandardMaterial
-          map={planetTexture}
-          transparent
-          opacity={0.6}
-          roughness={0.95}
-          metalness={0}
-          depthWrite={false}
-        />
+        <meshStandardMaterial map={planetTexture} transparent opacity={0.6} roughness={0.95} metalness={0} depthWrite={false} />
       </mesh>
 
       <mesh ref={cloudsRef}>
         <sphereGeometry args={[PLANET_RADIUS + 0.05, 64, 64]} />
-        <meshStandardMaterial
-          map={cloudTexture}
-          color="#ffffff"
-          transparent
-          opacity={style.cloudOpacity}
-          depthWrite={false}
-        />
+        <meshStandardMaterial map={cloudTexture} color="#ffffff" transparent opacity={style.cloudOpacity} depthWrite={false} />
       </mesh>
 
       {buildings.map((building) => {
-        const normal = new THREE.Vector3(...building.position).normalize();
-        const surfacePos = normal.clone().multiplyScalar(PLANET_RADIUS + 0.03);
-        const position: [number, number, number] = [surfacePos.x, surfacePos.y, surfacePos.z];
-        const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
-
+        const BuildingComponent = BUILDING_COMPONENT_MAP[building.type] || Grassland;
         const healthPercent = building.health / building.maxHealth;
-        const isDamaged = building.damaged;
-        const isDeleteMode = selectedTool === 'delete';
-        const isHovered = hoveredBuildingId === building.id;
-
-        let BuildingComponent;
-        if (building.type === 'forest') BuildingComponent = Forest;
-        else if (building.type === 'glacier') BuildingComponent = Glacier;
-        else if (building.type === 'city') BuildingComponent = City;
-        else BuildingComponent = Grassland;
-
-        const handleBuildingClick = (e: ThreeEvent<MouseEvent>) => {
-          e.stopPropagation();
-          if (isDeleteMode && onRemoveBuilding) onRemoveBuilding(building.id);
-        };
-
-        const handleBuildingPointerOver = (e: ThreeEvent<PointerEvent>) => {
-          e.stopPropagation();
-          if (isDeleteMode) {
-            setHoveredBuildingId(building.id);
-            document.body.style.cursor = 'pointer';
-          }
-        };
-
-        const handleBuildingPointerOut = (e: ThreeEvent<PointerEvent>) => {
-          e.stopPropagation();
-          if (isDeleteMode) {
-            setHoveredBuildingId(null);
-            document.body.style.cursor = 'auto';
-          }
-        };
 
         return (
-          <group
+          <SurfaceItem
             key={building.id}
-            position={position}
-            quaternion={quaternion}
+            id={building.id}
+            position={building.position}
             scale={building.scale}
-            onClick={handleBuildingClick}
-            onPointerOver={handleBuildingPointerOver}
-            onPointerOut={handleBuildingPointerOut}
+            isDeleteMode={isDeleteMode}
+            hoveredId={hoveredId}
+            onHoverChange={setHoveredId}
+            onRemove={onRemoveBuilding || (() => {})}
+            deleteRingY={0.05}
+            deleteRingSize={[0.15, 0.17]}
           >
             <group scale={healthPercent < 0.3 ? [0.85, 0.85, 0.85] : [1, 1, 1]}>
               <BuildingComponent position={[0, 0, 0]} scale={1} />
             </group>
-            {isDamaged && <BuildingHealthBar health={building.health} maxHealth={building.maxHealth} />}
-            {isDamaged && (
+            {building.damaged && <BuildingHealthBar health={building.health} maxHealth={building.maxHealth} />}
+            {building.damaged && (
               <mesh position={[0, 0.08, 0]}>
                 <sphereGeometry args={[0.02 + Math.random() * 0.01, 8, 8]} />
                 <meshBasicMaterial color="#666666" transparent opacity={0.6} />
               </mesh>
             )}
-            {isDeleteMode && isHovered && (
-              <mesh position={[0, 0.05, 0]}>
-                <ringGeometry args={[0.15, 0.17, 32]} />
-                <meshBasicMaterial color="#ef4444" transparent opacity={0.9} side={THREE.DoubleSide} />
-              </mesh>
-            )}
-          </group>
+          </SurfaceItem>
         );
       })}
 
-      {creatures.map((creature) => {
-        const normal = new THREE.Vector3(...creature.position).normalize();
-        const surfacePos = normal.clone().multiplyScalar(PLANET_RADIUS + 0.03);
-        const position: [number, number, number] = [surfacePos.x, surfacePos.y, surfacePos.z];
-        const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
-
-        const isDeleteMode = selectedTool === 'delete';
-        const isHovered = hoveredCreatureId === creature.id;
-
-        const handleCreatureClick = (e: ThreeEvent<MouseEvent>) => {
-          e.stopPropagation();
-          if (isDeleteMode && onRemoveCreature) onRemoveCreature(creature.id);
-        };
-
-        const handleCreaturePointerOver = (e: ThreeEvent<PointerEvent>) => {
-          e.stopPropagation();
-          if (isDeleteMode) {
-            setHoveredCreatureId(creature.id);
-            document.body.style.cursor = 'pointer';
-          }
-        };
-
-        const handleCreaturePointerOut = (e: ThreeEvent<PointerEvent>) => {
-          e.stopPropagation();
-          if (isDeleteMode) {
-            setHoveredCreatureId(null);
-            document.body.style.cursor = 'auto';
-          }
-        };
-
-        return (
-          <group
-            key={creature.id}
-            position={position}
-            quaternion={quaternion}
-            scale={creature.scale}
-            onClick={handleCreatureClick}
-            onPointerOver={handleCreaturePointerOver}
-            onPointerOut={handleCreaturePointerOut}
-          >
-            <CreatureComponent type={creature.type} position={[0, 0, 0]} scale={1} />
-            <mesh position={[0, 0.1, 0]}>
-              <sphereGeometry args={[0.3, 8, 8]} />
-              <meshBasicMaterial transparent opacity={0} />
-            </mesh>
-            {isDeleteMode && isHovered && (
-              <mesh position={[0, 0.2, 0]}>
-                <ringGeometry args={[0.25, 0.3, 32]} />
-                <meshBasicMaterial color="#ef4444" transparent opacity={0.9} side={THREE.DoubleSide} />
-              </mesh>
-            )}
-          </group>
-        );
-      })}
+      {creatures.map((creature) => (
+        <SurfaceItem
+          key={creature.id}
+          id={creature.id}
+          position={creature.position}
+          scale={creature.scale}
+          isDeleteMode={isDeleteMode}
+          hoveredId={hoveredId}
+          onHoverChange={setHoveredId}
+          onRemove={onRemoveCreature || (() => {})}
+          deleteRingY={0.2}
+          deleteRingSize={[0.25, 0.3]}
+        >
+          <CreatureComponent type={creature.type} position={[0, 0, 0]} scale={1} />
+          <mesh position={[0, 0.1, 0]}>
+            <sphereGeometry args={[0.3, 8, 8]} />
+            <meshBasicMaterial transparent opacity={0} />
+          </mesh>
+        </SurfaceItem>
+      ))}
 
       {disasters.map((disaster) => (
         <DisasterEffect key={disaster.id} disaster={disaster} />

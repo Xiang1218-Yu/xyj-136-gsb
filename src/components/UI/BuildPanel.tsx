@@ -8,107 +8,78 @@ interface BuildPanelProps {
   onReset: () => void;
 }
 
+/* 通用工具按钮组件，统一建筑/生物/删除按钮的渲染逻辑 */
+function ToolButton({
+  toolKey,
+  config,
+  isSelected,
+  onSelect,
+  size = 'large',
+}: {
+  toolKey: string;
+  config: { name: string; color: string; icon: string };
+  isSelected: boolean;
+  onSelect: (tool: string | null) => void;
+  size?: 'large' | 'small';
+}) {
+  const isLarge = size === 'large';
+  const iconSize = isLarge ? 'w-12 h-12 text-2xl' : 'w-10 h-10 text-xl';
+  const gap = isLarge ? 'gap-2' : 'gap-1.5';
+  const padding = isLarge ? 'p-4' : 'p-3';
+  const textSize = isLarge ? 'text-sm' : 'text-xs';
+  const glowSize = isLarge ? '30px' : '20px';
+  const checkSize = isLarge ? 'w-4 h-4' : 'w-3.5 h-3.5';
+  const checkTextClass = isLarge ? 'text-xs' : 'text-xs text-black/80';
+  const textShadowSize = isLarge ? '10px' : '8px';
+
+  return (
+    <button
+      key={toolKey}
+      onClick={() => onSelect(isSelected ? null : toolKey)}
+      className={`
+        relative flex flex-col items-center ${gap} ${padding} rounded-xl transition-all duration-300
+        ${isSelected
+          ? 'bg-white/20 scale-110 shadow-lg'
+          : 'bg-white/5 hover:bg-white/10 hover:scale-105'
+        }
+      `}
+      style={{
+        boxShadow: isSelected ? `0 0 ${glowSize} ${config.color}50` : 'none',
+      }}
+    >
+      <div
+        className={`${iconSize} flex items-center justify-center rounded-full`}
+        style={{
+          backgroundColor: `${config.color}30`,
+          border: `2px solid ${config.color}`,
+        }}
+      >
+        {config.icon}
+      </div>
+      <span
+        className={`${textSize} font-medium`}
+        style={{
+          color: isSelected ? config.color : '#fff',
+          textShadow: isSelected ? `0 0 ${textShadowSize} ${config.color}` : 'none',
+        }}
+      >
+        {config.name}
+      </span>
+      {isSelected && (
+        <div
+          className={`absolute -top-1 -right-1 ${checkSize} rounded-full ${checkTextClass} flex items-center justify-center`}
+          style={{ backgroundColor: config.color }}
+        >
+          ✓
+        </div>
+      )}
+    </button>
+  );
+}
+
 export function BuildPanel({ selectedTool, onSelectTool, onReset }: BuildPanelProps) {
   const buildingTools: BuildingType[] = ['forest', 'glacier', 'city', 'grassland'];
   const [activeTab, setActiveTab] = useState<'buildings' | 'creatures'>('buildings');
-
-  const renderBuildingButton = (tool: BuildingType) => {
-    const config = BUILDING_CONFIGS[tool];
-    const isSelected = selectedTool === tool;
-
-    return (
-      <button
-        key={tool}
-        onClick={() => onSelectTool(isSelected ? null : tool)}
-        className={`
-          relative flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300
-          ${isSelected
-            ? 'bg-white/20 scale-110 shadow-lg'
-            : 'bg-white/5 hover:bg-white/10 hover:scale-105'
-          }
-        `}
-        style={{
-          boxShadow: isSelected ? `0 0 30px ${config.color}50` : 'none',
-        }}
-      >
-        <div
-          className="w-12 h-12 flex items-center justify-center rounded-full text-2xl"
-          style={{
-            backgroundColor: `${config.color}30`,
-            border: `2px solid ${config.color}`,
-          }}
-        >
-          {config.icon}
-        </div>
-        <span
-          className="text-sm font-medium"
-          style={{
-            color: isSelected ? config.color : '#fff',
-            textShadow: isSelected ? `0 0 10px ${config.color}` : 'none',
-          }}
-        >
-          {config.name}
-        </span>
-        {isSelected && (
-          <div
-            className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs flex items-center justify-center"
-            style={{ backgroundColor: config.color }}
-          >
-            ✓
-          </div>
-        )}
-      </button>
-    );
-  };
-
-  const renderCreatureButton = (tool: CreatureType) => {
-    const config = CREATURE_CONFIGS[tool];
-    const isSelected = selectedTool === tool;
-
-    return (
-      <button
-        key={tool}
-        onClick={() => onSelectTool(isSelected ? null : tool)}
-        className={`
-          relative flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-300
-          ${isSelected
-            ? 'bg-white/20 scale-110 shadow-lg'
-            : 'bg-white/5 hover:bg-white/10 hover:scale-105'
-          }
-        `}
-        style={{
-          boxShadow: isSelected ? `0 0 20px ${config.color}50` : 'none',
-        }}
-      >
-        <div
-          className="w-10 h-10 flex items-center justify-center rounded-full text-xl"
-          style={{
-            backgroundColor: `${config.color}30`,
-            border: `2px solid ${config.color}`,
-          }}
-        >
-          {config.icon}
-        </div>
-        <span
-          className="text-xs font-medium"
-          style={{
-            color: isSelected ? config.color : '#fff',
-            textShadow: isSelected ? `0 0 8px ${config.color}` : 'none',
-          }}
-        >
-          {config.name}
-        </span>
-        {isSelected && (
-          <div
-            className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-xs flex items-center justify-center text-black/80"
-            style={{ backgroundColor: config.color }}
-          >
-            ✓
-          </div>
-        )}
-      </button>
-    );
-  };
 
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-10">
@@ -138,56 +109,26 @@ export function BuildPanel({ selectedTool, onSelectTool, onReset }: BuildPanelPr
       <div className="flex items-center gap-4 bg-black/40 backdrop-blur-lg rounded-2xl p-4 border border-white/10 shadow-2xl">
         {activeTab === 'buildings' ? (
           <>
-            {buildingTools.map(renderBuildingButton)}
+            {buildingTools.map((tool) => (
+              <ToolButton
+                key={tool}
+                toolKey={tool}
+                config={BUILDING_CONFIGS[tool]}
+                isSelected={selectedTool === tool}
+                onSelect={(t) => onSelectTool(t as ToolType | null)}
+                size="large"
+              />
+            ))}
 
             <div className="w-px h-16 bg-white/20 mx-2" />
 
-            {(() => {
-              const config = TOOL_CONFIGS.delete;
-              const isSelected = selectedTool === 'delete';
-              return (
-                <button
-                  onClick={() => onSelectTool(isSelected ? null : 'delete')}
-                  className={`
-                    relative flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300
-                    ${isSelected
-                      ? 'bg-red-500/30 scale-110 shadow-lg'
-                      : 'bg-white/5 hover:bg-red-500/20 hover:scale-105'
-                    }
-                  `}
-                  style={{
-                    boxShadow: isSelected ? `0 0 30px ${config.color}80` : 'none',
-                  }}
-                >
-                  <div
-                    className="w-12 h-12 flex items-center justify-center rounded-full text-2xl"
-                    style={{
-                      backgroundColor: `${config.color}30`,
-                      border: `2px solid ${config.color}`,
-                    }}
-                  >
-                    {config.icon}
-                  </div>
-                  <span
-                    className="text-sm font-medium"
-                    style={{
-                      color: isSelected ? config.color : '#fff',
-                      textShadow: isSelected ? `0 0 10px ${config.color}` : 'none',
-                    }}
-                  >
-                    {config.name}
-                  </span>
-                  {isSelected && (
-                    <div
-                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs flex items-center justify-center"
-                      style={{ backgroundColor: config.color }}
-                    >
-                      ✓
-                    </div>
-                  )}
-                </button>
-              );
-            })()}
+            <ToolButton
+              toolKey="delete"
+              config={TOOL_CONFIGS.delete}
+              isSelected={selectedTool === 'delete'}
+              onSelect={(t) => onSelectTool(t as ToolType | null)}
+              size="large"
+            />
           </>
         ) : (
           <>
@@ -199,7 +140,16 @@ export function BuildPanel({ selectedTool, onSelectTool, onReset }: BuildPanelPr
                    biome === 'glacier' ? '🏔️ 冰川' : '🏙️ 城市'}
                 </div>
                 <div className="flex gap-2">
-                  {creatureTypes.map(renderCreatureButton)}
+                  {creatureTypes.map((tool) => (
+                    <ToolButton
+                      key={tool}
+                      toolKey={tool}
+                      config={CREATURE_CONFIGS[tool]}
+                      isSelected={selectedTool === tool}
+                      onSelect={(t) => onSelectTool(t as ToolType | null)}
+                      size="small"
+                    />
+                  ))}
                 </div>
               </div>
             ))}
