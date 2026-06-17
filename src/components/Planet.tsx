@@ -1,9 +1,9 @@
 import { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame, ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
-import { PLANET_RADIUS } from '../utils/helpers';
+import { PLANET_RADIUS, PLANET_STYLE_CONFIGS } from '../utils/helpers';
 import { createPlanetTexture, createCloudTexture } from '../utils/texture';
-import { Building, Creature, ActiveDisaster, ToolType } from '../types/game';
+import { Building, Creature, ActiveDisaster, ToolType, PlanetStyle } from '../types/game';
 import { Forest } from './Buildings/Forest';
 import { Glacier } from './Buildings/Glacier';
 import { City } from './Buildings/City';
@@ -22,6 +22,7 @@ interface PlanetProps {
   buildings?: Building[];
   creatures?: Creature[];
   disasters?: ActiveDisaster[];
+  style?: PlanetStyle;
 }
 
 function createTerrainGeometry(radius: number, widthSeg: number, heightSeg: number): THREE.SphereGeometry {
@@ -62,7 +63,7 @@ function BuildingHealthBar({ health, maxHealth }: { health: number; maxHealth: n
   );
 }
 
-export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding, onRemoveCreature, selectedTool, lifeIndex, buildings = [], creatures = [], disasters = [] }: PlanetProps) {
+export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding, onRemoveCreature, selectedTool, lifeIndex, buildings = [], creatures = [], disasters = [], style = 'verdant' }: PlanetProps) {
   const groupRef = useRef<THREE.Group>(null);
   const planetRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
@@ -70,8 +71,10 @@ export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding,
   const [hoveredBuildingId, setHoveredBuildingId] = useState<string | null>(null);
   const [hoveredCreatureId, setHoveredCreatureId] = useState<string | null>(null);
 
-  const planetTexture = useMemo(() => createPlanetTexture(), []);
-  const cloudTexture = useMemo(() => createCloudTexture(), []);
+  const styleConfig = PLANET_STYLE_CONFIGS[style];
+
+  const planetTexture = useMemo(() => createPlanetTexture(style), [style]);
+  const cloudTexture = useMemo(() => createCloudTexture(style), [style]);
 
   const terrainGeometry = useMemo(
     () => createTerrainGeometry(PLANET_RADIUS + 0.005, 128, 128),
@@ -82,13 +85,14 @@ export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding,
     const t = lifeIndex / 100;
     if (planetRef.current) {
       const mat = planetRef.current.material as THREE.MeshStandardMaterial;
+      const baseColor = new THREE.Color(styleConfig.baseColor);
       mat.color.setRGB(
-        0.35 + t * 0.15,
-        0.3 + t * 0.35,
-        0.4 + t * 0.05
+        baseColor.r + t * 0.15,
+        baseColor.g + t * 0.2,
+        baseColor.b + t * 0.1
       );
     }
-  }, [lifeIndex]);
+  }, [lifeIndex, styleConfig.baseColor]);
 
   useFrame((state, delta) => {
     if (groupRef.current) {
@@ -302,7 +306,7 @@ export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding,
       <mesh scale={1.06}>
         <sphereGeometry args={[PLANET_RADIUS, 64, 64]} />
         <meshBasicMaterial
-          color="#a8d8ff"
+          color={styleConfig.atmosphereColor}
           transparent
           opacity={0.22}
           side={THREE.BackSide}
@@ -313,7 +317,7 @@ export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding,
       <mesh scale={1.15}>
         <sphereGeometry args={[PLANET_RADIUS, 64, 64]} />
         <meshBasicMaterial
-          color="#6ab0ff"
+          color={styleConfig.atmosphereColor}
           transparent
           opacity={0.12}
           side={THREE.BackSide}
@@ -324,7 +328,7 @@ export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding,
       <mesh scale={1.28}>
         <sphereGeometry args={[PLANET_RADIUS, 64, 64]} />
         <meshBasicMaterial
-          color="#4a9eff"
+          color={styleConfig.atmosphereColor}
           transparent
           opacity={0.05}
           side={THREE.BackSide}

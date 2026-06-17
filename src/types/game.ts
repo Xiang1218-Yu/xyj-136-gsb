@@ -4,6 +4,8 @@ export type ToolType = BuildingType | CreatureType | 'delete';
 
 export type DisasterType = 'earthquake' | 'volcano' | 'flood' | 'meteor';
 
+export type PlanetStyle = 'verdant' | 'desert' | 'ocean' | 'volcanic' | 'ice' | 'crystal';
+
 export interface Building {
   id: string;
   type: BuildingType;
@@ -24,22 +26,9 @@ export interface Creature {
 }
 
 export interface GameState {
-  buildings: Building[];
-  creatures: Creature[];
+  planets: PlanetState[];
+  currentPlanetId: string;
   selectedTool: ToolType | null;
-  lifeIndex: number;
-  forestCount: number;
-  glacierCount: number;
-  cityCount: number;
-  grasslandCount: number;
-  birdCount: number;
-  squirrelCount: number;
-  deerCount: number;
-  butterflyCount: number;
-  rabbitCount: number;
-  penguinCount: number;
-  snowOwlCount: number;
-  pigeonCount: number;
 }
 
 export interface BuildingConfig {
@@ -105,5 +94,36 @@ export interface DisasterWarning {
   countdown: number;
   estimatedIntensity: number;
   timestamp: number;
+}
+
+export interface PlanetStyleConfig {
+  type: PlanetStyle;
+  name: string;
+  icon: string;
+  baseColor: string;
+  atmosphereColor: string;
+  cloudColor: string;
+  description: string;
+}
+
+export interface PlanetState {
+  id: string;
+  name: string;
+  style: PlanetStyle;
+  buildings: Building[];
+  creatures: Creature[];
+  lifeIndex: number;
+  forestCount: number;
+  glacierCount: number;
+  cityCount: number;
+  grasslandCount: number;
+  birdCount: number;
+  squirrelCount: number;
+  deerCount: number;
+  butterflyCount: number;
+  rabbitCount: number;
+  penguinCount: number;
+  snowOwlCount: number;
+  pigeonCount: number;
 }
 

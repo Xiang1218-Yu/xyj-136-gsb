@@ -1,4 +1,4 @@
-import { BuildingType, BuildingConfig, CreatureType, CreatureConfig, DisasterType, DisasterConfig, ToolType } from '../types/game';
+import { BuildingType, BuildingConfig, CreatureType, CreatureConfig, DisasterType, DisasterConfig, ToolType, PlanetStyle, PlanetStyleConfig, PlanetState, Building, Creature } from '../types/game';
 
 interface ToolConfig {
   type: ToolType;
@@ -358,3 +358,89 @@ export const CREATURES_BY_BIOME: Record<string, CreatureType[]> = {
   glacier: ['penguin', 'snowOwl'],
   city: ['pigeon'],
 };
+
+export const PLANET_STYLE_CONFIGS: Record<PlanetStyle, PlanetStyleConfig> = {
+  verdant: {
+    type: 'verdant',
+    name: '翠绿星球',
+    icon: '🌍',
+    baseColor: '#2d5a27',
+    atmosphereColor: '#a8d8ff',
+    cloudColor: '#ffffff',
+    description: '生机勃勃的绿色星球，适合森林和草地生长',
+  },
+  desert: {
+    type: 'desert',
+    name: '沙漠星球',
+    icon: '🏜️',
+    baseColor: '#c2956e',
+    atmosphereColor: '#ffd9a8',
+    cloudColor: '#fff0e0',
+    description: '干燥的沙漠星球，金色沙丘一望无际',
+  },
+  ocean: {
+    type: 'ocean',
+    name: '海洋星球',
+    icon: '🌊',
+    baseColor: '#1e5f8a',
+    atmosphereColor: '#87ceeb',
+    cloudColor: '#e0f0ff',
+    description: '蔚蓝的海洋星球，水域覆盖大部分表面',
+  },
+  volcanic: {
+    type: 'volcanic',
+    name: '火山星球',
+    icon: '🌋',
+    baseColor: '#4a2020',
+    atmosphereColor: '#ff6b4a',
+    cloudColor: '#553333',
+    description: '炽热的火山星球，熔岩在地表流淌',
+  },
+  ice: {
+    type: 'ice',
+    name: '冰封星球',
+    icon: '❄️',
+    baseColor: '#a8d4e6',
+    atmosphereColor: '#d0e8f5',
+    cloudColor: '#f0f8ff',
+    description: '寒冷的冰封星球，冰雪覆盖整个世界',
+  },
+  crystal: {
+    type: 'crystal',
+    name: '水晶星球',
+    icon: '💎',
+    baseColor: '#6a5acd',
+    atmosphereColor: '#dda0dd',
+    cloudColor: '#e6e6fa',
+    description: '神秘的水晶星球，闪烁着梦幻的光芒',
+  },
+};
+
+export function updateCountsAndLifeIndex(buildings: Building[], creatures: Creature[]) {
+  const forestCount = buildings.filter(b => b.type === 'forest').length;
+  const glacierCount = buildings.filter(b => b.type === 'glacier').length;
+  const cityCount = buildings.filter(b => b.type === 'city').length;
+  const grasslandCount = buildings.filter(b => b.type === 'grassland').length;
+
+  const birdCount = creatures.filter(c => c.type === 'bird').length;
+  const squirrelCount = creatures.filter(c => c.type === 'squirrel').length;
+  const deerCount = creatures.filter(c => c.type === 'deer').length;
+  const butterflyCount = creatures.filter(c => c.type === 'butterfly').length;
+  const rabbitCount = creatures.filter(c => c.type === 'rabbit').length;
+  const penguinCount = creatures.filter(c => c.type === 'penguin').length;
+  const snowOwlCount = creatures.filter(c => c.type === 'snowOwl').length;
+  const pigeonCount = creatures.filter(c => c.type === 'pigeon').length;
+
+  const lifeIndex = calculateLifeIndex(
+    forestCount, glacierCount, cityCount, grasslandCount,
+    birdCount, squirrelCount, deerCount, butterflyCount,
+    rabbitCount, penguinCount, snowOwlCount, pigeonCount
+  );
+
+  return {
+    forestCount, glacierCount, cityCount, grasslandCount,
+    birdCount, squirrelCount, deerCount, butterflyCount,
+    rabbitCount, penguinCount, snowOwlCount, pigeonCount,
+    lifeIndex
+  };
+}
