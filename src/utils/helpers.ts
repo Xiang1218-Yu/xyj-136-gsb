@@ -1,4 +1,4 @@
-import { BuildingType, BuildingConfig, CreatureType, CreatureConfig, DisasterType, DisasterConfig, ToolType } from '../types/game';
+import { BuildingType, BuildingConfig, CreatureType, CreatureConfig, DisasterType, DisasterConfig, ToolType, PlanetThemeType, PlanetThemeConfig } from '../types/game';
 
 interface ToolConfig {
   type: ToolType;
@@ -357,4 +357,67 @@ export const CREATURES_BY_BIOME: Record<string, CreatureType[]> = {
   grassland: ['butterfly', 'rabbit'],
   glacier: ['penguin', 'snowOwl'],
   city: ['pigeon'],
+};
+
+export const PLANET_THEME_CONFIGS: Record<PlanetThemeType, PlanetThemeConfig> = {
+  forest: {
+    type: 'forest',
+    name: '翠绿星球',
+    icon: '🌍',
+    description: '生机勃勃的绿色星球，森林茂密，水源充足',
+    baseColor: '#2d5a27',
+    secondaryColor: '#8b7355',
+    atmosphereColor: '#a8d8ff',
+    cloudColor: '#ffffff',
+    hasClouds: true,
+    rotationSpeed: 0.03,
+  },
+  desert: {
+    type: 'desert',
+    name: '沙漠星球',
+    icon: '🏜️',
+    description: '广袤的金色沙漠，烈日当空，风沙漫天',
+    baseColor: '#c2956a',
+    secondaryColor: '#e6c88a',
+    atmosphereColor: '#ffd9a0',
+    cloudColor: '#fff0d0',
+    hasClouds: false,
+    rotationSpeed: 0.025,
+  },
+  ice: {
+    type: 'ice',
+    name: '冰雪星球',
+    icon: '🧊',
+    description: '银装素裹的冰雪世界，冰川纵横，寒风凛冽',
+    baseColor: '#a0d8f0',
+    secondaryColor: '#c8e8f8',
+    atmosphereColor: '#d0e8ff',
+    cloudColor: '#e8f4ff',
+    hasClouds: true,
+    rotationSpeed: 0.02,
+  },
+  lava: {
+    type: 'lava',
+    name: '熔岩星球',
+    icon: '🌋',
+    description: '炽热的熔岩星球，火山活跃，岩浆奔涌',
+    baseColor: '#8b2500',
+    secondaryColor: '#ff4500',
+    atmosphereColor: '#ff6b35',
+    cloudColor: '#ffd700',
+    hasClouds: false,
+    rotationSpeed: 0.035,
+  },
+  ocean: {
+    type: 'ocean',
+    name: '海洋星球',
+    icon: '🌊',
+    description: '蔚蓝的水世界，海洋广阔，岛屿星罗棋布',
+    baseColor: '#1e90ff',
+    secondaryColor: '#4682b4',
+    atmosphereColor: '#87ceeb',
+    cloudColor: '#ffffff',
+    hasClouds: true,
+    rotationSpeed: 0.028,
+  },
 };

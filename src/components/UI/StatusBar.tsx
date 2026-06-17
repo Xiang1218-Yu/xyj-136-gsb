@@ -6,6 +6,7 @@ interface StatusBarProps {
   glacierCount: number;
   cityCount: number;
   grasslandCount: number;
+  planetName?: string;
 }
 
 export function StatusBar({
@@ -14,6 +15,7 @@ export function StatusBar({
   glacierCount,
   cityCount,
   grasslandCount,
+  planetName = '星球重生模拟器',
 }: StatusBarProps) {
   const stats = [
     { type: 'forest' as const, count: forestCount },
@@ -27,7 +29,7 @@ export function StatusBar({
       <div className="flex items-center gap-6 bg-black/40 backdrop-blur-lg rounded-2xl px-8 py-4 border border-white/10 shadow-2xl">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-            星球重生模拟器
+            {planetName}
           </h1>
           <p className="text-white/50 text-xs">Planet Rebirth Simulator</p>
         </div>

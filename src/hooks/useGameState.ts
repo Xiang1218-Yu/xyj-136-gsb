@@ -1,90 +1,60 @@
 import { useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { Building, BuildingType, Creature, CreatureType, GameState, ToolType } from '../types/game';
-import { generateId, calculateLifeIndex, PLANET_RADIUS, BUILDING_CONFIGS, CREATURE_CONFIGS } from '../utils/helpers';
+import { Building, BuildingType, Creature, CreatureType, ToolType, PlanetState, PlanetThemeType, MultiPlanetGameState } from '../types/game';
+import { generateId, calculateLifeIndex, PLANET_RADIUS, BUILDING_CONFIGS, CREATURE_CONFIGS, PLANET_THEME_CONFIGS } from '../utils/helpers';
 
-function createInitialBuildings(): Building[] {
+function createInitialBuildings(theme: PlanetThemeType): Building[] {
   const buildings: Building[] = [];
 
-  const forestPositions: [number, number, number][] = [
-    [0.5, 1.5, 1.2],
-    [-0.8, 1.0, 1.5],
-    [1.2, 0.5, 1.3],
-  ];
+  const positionsByTheme: Record<PlanetThemeType, Record<BuildingType, [number, number, number][]>> = {
+    forest: {
+      forest: [[0.5, 1.5, 1.2], [-0.8, 1.0, 1.5], [1.2, 0.5, 1.3]],
+      glacier: [[-0.3, 1.8, 0.8], [0.6, -1.6, 1.0]],
+      city: [[1.5, 0.3, 1.0], [-1.0, -0.5, 1.5]],
+      grassland: [[0.2, 1.2, 1.6], [-1.2, 0.8, 1.2], [0.8, -1.0, 1.5]],
+    },
+    desert: {
+      forest: [[0.8, 0.6, 1.5]],
+      glacier: [],
+      city: [[1.2, 0.2, 1.2], [-0.9, -0.4, 1.4]],
+      grassland: [[0.3, 1.0, 1.5], [-0.7, 0.9, 1.3]],
+    },
+    ice: {
+      forest: [],
+      glacier: [[-0.5, 1.5, 1.0], [0.7, -1.2, 1.2], [-1.0, 0.5, 1.3]],
+      city: [[1.0, 0.4, 1.3]],
+      grassland: [],
+    },
+    lava: {
+      forest: [],
+      glacier: [],
+      city: [[0.9, 0.5, 1.4]],
+      grassland: [[-1.0, 0.6, 1.3]],
+    },
+    ocean: {
+      forest: [[0.6, 1.2, 1.4], [-0.7, 0.8, 1.5]],
+      glacier: [[0.2, 1.6, 1.0]],
+      city: [[1.3, 0.1, 1.1]],
+      grassland: [[-0.4, 1.1, 1.6], [0.9, -0.8, 1.4]],
+    },
+  };
 
-  forestPositions.forEach((pos, i) => {
-    const normalized = new THREE.Vector3(...pos).normalize().multiplyScalar(PLANET_RADIUS);
-    const baseHealth = BUILDING_CONFIGS.forest.baseHealth;
-    buildings.push({
-      id: `forest-${i}`,
-      type: 'forest',
-      position: [normalized.x, normalized.y, normalized.z],
-      scale: 2,
-      rotation: [0, Math.random() * Math.PI * 2, 0],
-      health: baseHealth,
-      maxHealth: baseHealth,
-      damaged: false,
-    });
-  });
+  const positions = positionsByTheme[theme];
 
-  const glacierPositions: [number, number, number][] = [
-    [-0.3, 1.8, 0.8],
-    [0.6, -1.6, 1.0],
-  ];
-
-  glacierPositions.forEach((pos, i) => {
-    const normalized = new THREE.Vector3(...pos).normalize().multiplyScalar(PLANET_RADIUS);
-    const baseHealth = BUILDING_CONFIGS.glacier.baseHealth;
-    buildings.push({
-      id: `glacier-${i}`,
-      type: 'glacier',
-      position: [normalized.x, normalized.y, normalized.z],
-      scale: 2,
-      rotation: [0, Math.random() * Math.PI * 2, 0],
-      health: baseHealth,
-      maxHealth: baseHealth,
-      damaged: false,
-    });
-  });
-
-  const cityPositions: [number, number, number][] = [
-    [1.5, 0.3, 1.0],
-    [-1.0, -0.5, 1.5],
-  ];
-
-  cityPositions.forEach((pos, i) => {
-    const normalized = new THREE.Vector3(...pos).normalize().multiplyScalar(PLANET_RADIUS);
-    const baseHealth = BUILDING_CONFIGS.city.baseHealth;
-    buildings.push({
-      id: `city-${i}`,
-      type: 'city',
-      position: [normalized.x, normalized.y, normalized.z],
-      scale: 2,
-      rotation: [0, Math.random() * Math.PI * 2, 0],
-      health: baseHealth,
-      maxHealth: baseHealth,
-      damaged: false,
-    });
-  });
-
-  const grasslandPositions: [number, number, number][] = [
-    [0.2, 1.2, 1.6],
-    [-1.2, 0.8, 1.2],
-    [0.8, -1.0, 1.5],
-  ];
-
-  grasslandPositions.forEach((pos, i) => {
-    const normalized = new THREE.Vector3(...pos).normalize().multiplyScalar(PLANET_RADIUS);
-    const baseHealth = BUILDING_CONFIGS.grassland.baseHealth;
-    buildings.push({
-      id: `grassland-${i}`,
-      type: 'grassland',
-      position: [normalized.x, normalized.y, normalized.z],
-      scale: 2,
-      rotation: [0, Math.random() * Math.PI * 2, 0],
-      health: baseHealth,
-      maxHealth: baseHealth,
-      damaged: false,
+  (Object.keys(positions) as BuildingType[]).forEach((type) => {
+    positions[type].forEach((pos, i) => {
+      const normalized = new THREE.Vector3(...pos).normalize().multiplyScalar(PLANET_RADIUS);
+      const baseHealth = BUILDING_CONFIGS[type].baseHealth;
+      buildings.push({
+        id: `${type}-${i}`,
+        type,
+        position: [normalized.x, normalized.y, normalized.z],
+        scale: 2,
+        rotation: [0, Math.random() * Math.PI * 2, 0],
+        health: baseHealth,
+        maxHealth: baseHealth,
+        damaged: false,
+      });
     });
   });
 
@@ -92,8 +62,7 @@ function createInitialBuildings(): Building[] {
 }
 
 function createInitialCreatures(): Creature[] {
-  const creatures: Creature[] = [];
-  return creatures;
+  return [];
 }
 
 function updateCountsAndLifeIndex(buildings: Building[], creatures: Creature[]) {
@@ -125,22 +94,58 @@ function updateCountsAndLifeIndex(buildings: Building[], creatures: Creature[]) 
   };
 }
 
-export function useGameState() {
-  const [gameState, setGameState] = useState<GameState>(() => {
-    const initialBuildings = createInitialBuildings();
-    const initialCreatures = createInitialCreatures();
-    const counts = updateCountsAndLifeIndex(initialBuildings, initialCreatures);
+function createPlanet(id: string, name: string, theme: PlanetThemeType): PlanetState {
+  const initialBuildings = createInitialBuildings(theme);
+  const initialCreatures = createInitialCreatures();
+  const counts = updateCountsAndLifeIndex(initialBuildings, initialCreatures);
 
+  return {
+    id,
+    name,
+    theme,
+    buildings: initialBuildings,
+    creatures: initialCreatures,
+    ...counts,
+  };
+}
+
+function createInitialPlanets(): PlanetState[] {
+  return [
+    createPlanet('planet-1', '翠绿星', 'forest'),
+    createPlanet('planet-2', '沙漠星', 'desert'),
+    createPlanet('planet-3', '冰雪星', 'ice'),
+    createPlanet('planet-4', '熔岩星', 'lava'),
+    createPlanet('planet-5', '海洋星', 'ocean'),
+  ];
+}
+
+export function useGameState() {
+  const [gameState, setGameState] = useState<MultiPlanetGameState>(() => {
+    const planets = createInitialPlanets();
     return {
-      buildings: initialBuildings,
-      creatures: initialCreatures,
+      planets,
+      currentPlanetId: planets[0].id,
       selectedTool: null,
-      ...counts,
     };
   });
 
+  const currentPlanet = gameState.planets.find(p => p.id === gameState.currentPlanetId)!;
+
   const selectTool = useCallback((tool: ToolType | null) => {
     setGameState(prev => ({ ...prev, selectedTool: tool }));
+  }, []);
+
+  const switchPlanet = useCallback((planetId: string) => {
+    setGameState(prev => ({ ...prev, currentPlanetId: planetId }));
+  }, []);
+
+  const updateCurrentPlanet = useCallback((updater: (planet: PlanetState) => PlanetState) => {
+    setGameState(prev => ({
+      ...prev,
+      planets: prev.planets.map(p =>
+        p.id === prev.currentPlanetId ? updater(p) : p
+      ),
+    }));
   }, []);
 
   const addBuilding = useCallback((type: BuildingType, position: [number, number, number]) => {
@@ -156,12 +161,12 @@ export function useGameState() {
       damaged: false,
     };
 
-    setGameState(prev => {
+    updateCurrentPlanet(prev => {
       const newBuildings = [...prev.buildings, building];
       const counts = updateCountsAndLifeIndex(newBuildings, prev.creatures);
       return { ...prev, buildings: newBuildings, ...counts };
     });
-  }, []);
+  }, [updateCurrentPlanet]);
 
   const addCreature = useCallback((type: CreatureType, position: [number, number, number]) => {
     const creature: Creature = {
@@ -172,15 +177,15 @@ export function useGameState() {
       rotation: [0, Math.random() * Math.PI * 2, 0],
     };
 
-    setGameState(prev => {
+    updateCurrentPlanet(prev => {
       const newCreatures = [...prev.creatures, creature];
       const counts = updateCountsAndLifeIndex(prev.buildings, newCreatures);
       return { ...prev, creatures: newCreatures, ...counts };
     });
-  }, []);
+  }, [updateCurrentPlanet]);
 
   const damageBuildings = useCallback((damages: { id: string; damage: number }[]) => {
-    setGameState(prev => {
+    updateCurrentPlanet(prev => {
       const damageMap = new Map(damages.map(d => [d.id, d.damage]));
       const newBuildings = prev.buildings.map(b => {
         const damage = damageMap.get(b.id);
@@ -197,35 +202,35 @@ export function useGameState() {
       const counts = updateCountsAndLifeIndex(newBuildings, prev.creatures);
       return { ...prev, buildings: newBuildings, ...counts };
     });
-  }, []);
+  }, [updateCurrentPlanet]);
 
   const removeBuildings = useCallback((ids: string[]) => {
-    setGameState(prev => {
+    updateCurrentPlanet(prev => {
       const idSet = new Set(ids);
       const newBuildings = prev.buildings.filter(b => !idSet.has(b.id));
       const counts = updateCountsAndLifeIndex(newBuildings, prev.creatures);
       return { ...prev, buildings: newBuildings, ...counts };
     });
-  }, []);
+  }, [updateCurrentPlanet]);
 
   const removeBuilding = useCallback((id: string) => {
-    setGameState(prev => {
+    updateCurrentPlanet(prev => {
       const newBuildings = prev.buildings.filter(b => b.id !== id);
       const counts = updateCountsAndLifeIndex(newBuildings, prev.creatures);
       return { ...prev, buildings: newBuildings, ...counts };
     });
-  }, []);
+  }, [updateCurrentPlanet]);
 
   const removeCreature = useCallback((id: string) => {
-    setGameState(prev => {
+    updateCurrentPlanet(prev => {
       const newCreatures = prev.creatures.filter(c => c.id !== id);
       const counts = updateCountsAndLifeIndex(prev.buildings, newCreatures);
       return { ...prev, creatures: newCreatures, ...counts };
     });
-  }, []);
+  }, [updateCurrentPlanet]);
 
   const resetBuildings = useCallback(() => {
-    setGameState(prev => ({
+    updateCurrentPlanet(prev => ({
       ...prev,
       buildings: [],
       creatures: [],
@@ -243,11 +248,23 @@ export function useGameState() {
       pigeonCount: 0,
       lifeIndex: 0,
     }));
+  }, [updateCurrentPlanet]);
+
+  const resetAllPlanets = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      planets: prev.planets.map(p => createPlanet(p.id, p.name, p.theme)),
+    }));
   }, []);
 
   return {
     gameState,
+    currentPlanet,
+    planets: gameState.planets,
+    selectedTool: gameState.selectedTool,
+    currentPlanetId: gameState.currentPlanetId,
     selectTool,
+    switchPlanet,
     addBuilding,
     addCreature,
     damageBuildings,
@@ -255,6 +272,6 @@ export function useGameState() {
     removeBuilding,
     removeCreature,
     resetBuildings,
+    resetAllPlanets,
   };
 }
-

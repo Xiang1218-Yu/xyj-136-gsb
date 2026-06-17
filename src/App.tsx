@@ -6,6 +6,7 @@ import { DisasterAlert } from './components/UI/DisasterAlert';
 import { DisasterInfoPanel } from './components/UI/DisasterInfoPanel';
 import { TimeControlPanel } from './components/UI/TimeControlPanel';
 import { VolumeControl } from './components/UI/VolumeControl';
+import { PlanetSwitcher } from './components/UI/PlanetSwitcher';
 import { useGameState } from './hooks/useGameState';
 import { useDisasters } from './hooks/useDisasters';
 import { useAudio } from './hooks/useAudio';
@@ -14,8 +15,12 @@ import { useEffect, useRef } from 'react';
 
 function AppContent() {
   const {
-    gameState,
+    currentPlanet,
+    planets,
+    currentPlanetId,
+    selectedTool,
     selectTool,
+    switchPlanet,
     addBuilding,
     addCreature,
     damageBuildings,
@@ -25,22 +30,22 @@ function AppContent() {
     resetBuildings,
   } = useGameState();
 
-  const audio = useAudio(gameState.lifeIndex, {
-    forestCount: gameState.forestCount,
-    glacierCount: gameState.glacierCount,
-    grasslandCount: gameState.grasslandCount,
-    cityCount: gameState.cityCount,
+  const audio = useAudio(currentPlanet.lifeIndex, {
+    forestCount: currentPlanet.forestCount,
+    glacierCount: currentPlanet.glacierCount,
+    grasslandCount: currentPlanet.grasslandCount,
+    cityCount: currentPlanet.cityCount,
   });
 
-  const prevSelectedToolRef = useRef(gameState.selectedTool);
+  const prevSelectedToolRef = useRef(selectedTool);
   useEffect(() => {
-    if (gameState.selectedTool !== prevSelectedToolRef.current) {
-      if (gameState.selectedTool) {
+    if (selectedTool !== prevSelectedToolRef.current) {
+      if (selectedTool) {
         audio.playToolSelect();
       }
-      prevSelectedToolRef.current = gameState.selectedTool;
+      prevSelectedToolRef.current = selectedTool;
     }
-  }, [gameState.selectedTool, audio]);
+  }, [selectedTool, audio]);
   
   const {
     activeDisasters,
@@ -50,7 +55,7 @@ function AppContent() {
     triggerRandomDisaster,
     dismissWarning,
   } = useDisasters({
-    buildings: gameState.buildings,
+    buildings: currentPlanet.buildings,
     onDamageBuildings: damageBuildings,
     onRemoveBuildings: removeBuildings,
   });
@@ -100,27 +105,35 @@ function AppContent() {
   return (
     <div className="w-full h-screen relative overflow-hidden bg-space-dark">
       <GameCanvas
-        buildings={gameState.buildings}
-        creatures={gameState.creatures}
-        selectedTool={gameState.selectedTool}
+        buildings={currentPlanet.buildings}
+        creatures={currentPlanet.creatures}
+        selectedTool={selectedTool}
         onAddBuilding={handleAddBuilding}
         onAddCreature={handleAddCreature}
         onRemoveBuilding={handleRemoveBuilding}
         onRemoveCreature={handleRemoveCreature}
-        lifeIndex={gameState.lifeIndex}
+        lifeIndex={currentPlanet.lifeIndex}
         disasters={activeDisasters}
+        theme={currentPlanet.theme}
+      />
+
+      <PlanetSwitcher
+        planets={planets}
+        currentPlanetId={currentPlanetId}
+        onSwitchPlanet={switchPlanet}
       />
 
       <StatusBar
-        lifeIndex={gameState.lifeIndex}
-        forestCount={gameState.forestCount}
-        glacierCount={gameState.glacierCount}
-        cityCount={gameState.cityCount}
-        grasslandCount={gameState.grasslandCount}
+        lifeIndex={currentPlanet.lifeIndex}
+        forestCount={currentPlanet.forestCount}
+        glacierCount={currentPlanet.glacierCount}
+        cityCount={currentPlanet.cityCount}
+        grasslandCount={currentPlanet.grasslandCount}
+        planetName={currentPlanet.name}
       />
 
       <BuildPanel
-        selectedTool={gameState.selectedTool}
+        selectedTool={selectedTool}
         onSelectTool={selectTool}
         onReset={handleReset}
       />

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { PlanetThemeType } from '../types/game';
 
 export function createPlanetTexture(): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
@@ -52,6 +53,260 @@ export function createPlanetTexture(): THREE.CanvasTexture {
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
+function createDesertPlanetTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d')!;
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, '#c2956a');
+  gradient.addColorStop(0.3, '#d4a574');
+  gradient.addColorStop(0.5, '#e6c88a');
+  gradient.addColorStop(0.7, '#d4a574');
+  gradient.addColorStop(1, '#b8860b');
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < 40; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const radius = 40 + Math.random() * 100;
+    const colors = [
+      'rgba(210, 180, 140, 0.4)',
+      'rgba(244, 164, 96, 0.3)',
+      'rgba(218, 165, 32, 0.3)',
+    ];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    const blobGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    blobGradient.addColorStop(0, color);
+    blobGradient.addColorStop(1, 'transparent');
+
+    ctx.fillStyle = blobGradient;
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius, radius * 0.4, Math.random() * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  for (let i = 0; i < 300; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const size = 1 + Math.random() * 3;
+    ctx.fillStyle = `rgba(139, 90, 43, ${0.1 + Math.random() * 0.2})`;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
+function createIcePlanetTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d')!;
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, '#e0f0ff');
+  gradient.addColorStop(0.3, '#c0e0f8');
+  gradient.addColorStop(0.5, '#a0d0f0');
+  gradient.addColorStop(0.7, '#b8e0f5');
+  gradient.addColorStop(1, '#90c0e8');
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < 60; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const radius = 30 + Math.random() * 70;
+    const colors = [
+      'rgba(255, 255, 255, 0.5)',
+      'rgba(200, 230, 255, 0.4)',
+      'rgba(180, 220, 255, 0.3)',
+    ];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    const blobGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    blobGradient.addColorStop(0, color);
+    blobGradient.addColorStop(1, 'transparent');
+
+    ctx.fillStyle = blobGradient;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  for (let i = 0; i < 150; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const length = 5 + Math.random() * 20;
+    const angle = Math.random() * Math.PI;
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.2 + Math.random() * 0.3})`;
+    ctx.lineWidth = 0.5 + Math.random() * 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
+function createLavaPlanetTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d')!;
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, '#4a1000');
+  gradient.addColorStop(0.3, '#6b1a00');
+  gradient.addColorStop(0.5, '#8b2500');
+  gradient.addColorStop(0.7, '#a52a00');
+  gradient.addColorStop(1, '#5c1500');
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < 50; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const radius = 20 + Math.random() * 60;
+    const colors = [
+      'rgba(255, 69, 0, 0.5)',
+      'rgba(255, 140, 0, 0.4)',
+      'rgba(255, 0, 0, 0.3)',
+      'rgba(255, 215, 0, 0.3)',
+    ];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    const blobGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    blobGradient.addColorStop(0, color);
+    blobGradient.addColorStop(1, 'transparent');
+
+    ctx.fillStyle = blobGradient;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  for (let i = 0; i < 80; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const length = 10 + Math.random() * 40;
+    const angle = Math.random() * Math.PI;
+    ctx.strokeStyle = `rgba(255, 100, 0, ${0.3 + Math.random() * 0.4})`;
+    ctx.lineWidth = 1 + Math.random() * 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
+function createOceanPlanetTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d')!;
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, '#004080');
+  gradient.addColorStop(0.3, '#1e60a0');
+  gradient.addColorStop(0.5, '#2e80c0');
+  gradient.addColorStop(0.7, '#1e90ff');
+  gradient.addColorStop(1, '#005090');
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < 30; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const radius = 30 + Math.random() * 80;
+    const colors = [
+      'rgba(100, 149, 237, 0.4)',
+      'rgba(70, 130, 180, 0.3)',
+      'rgba(135, 206, 235, 0.3)',
+    ];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    const blobGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    blobGradient.addColorStop(0, color);
+    blobGradient.addColorStop(1, 'transparent');
+
+    ctx.fillStyle = blobGradient;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  for (let i = 0; i < 20; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * canvas.height;
+    const radius = 15 + Math.random() * 35;
+    const islandGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    islandGradient.addColorStop(0, 'rgba(85, 107, 47, 0.6)');
+    islandGradient.addColorStop(0.6, 'rgba(139, 115, 85, 0.4)');
+    islandGradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = islandGradient;
+    ctx.beginPath();
+    ctx.ellipse(x, y, radius, radius * 0.6, Math.random() * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
+const planetTextureCache: Partial<Record<PlanetThemeType, THREE.CanvasTexture>> = {};
+
+export function createThemedPlanetTexture(theme: PlanetThemeType): THREE.CanvasTexture {
+  if (planetTextureCache[theme]) {
+    return planetTextureCache[theme]!;
+  }
+
+  let texture: THREE.CanvasTexture;
+  switch (theme) {
+    case 'desert':
+      texture = createDesertPlanetTexture();
+      break;
+    case 'ice':
+      texture = createIcePlanetTexture();
+      break;
+    case 'lava':
+      texture = createLavaPlanetTexture();
+      break;
+    case 'ocean':
+      texture = createOceanPlanetTexture();
+      break;
+    case 'forest':
+    default:
+      texture = createPlanetTexture();
+      break;
+  }
+
+  planetTextureCache[theme] = texture;
   return texture;
 }
 
