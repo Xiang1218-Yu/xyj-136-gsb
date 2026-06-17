@@ -7,7 +7,7 @@ import { Planet } from './Planet';
 import { Moon } from './Moon';
 import { Sun } from './Sun';
 import { Starfield } from './Starfield';
-import { Building, Creature, BuildingType, CreatureType, ToolType, ActiveDisaster } from '../types/game';
+import { Building, Creature, BuildingType, CreatureType, ToolType, ActiveDisaster, PlanetStyleId } from '../types/game';
 import { PLANET_RADIUS, isBuildingType, isCreatureType } from '../utils/helpers';
 import { useDayNight } from '../contexts/DayNightContext';
 
@@ -21,8 +21,10 @@ interface GameCanvasProps {
   onRemoveCreature: (id: string) => void;
   lifeIndex: number;
   disasters?: ActiveDisaster[];
+  styleId: PlanetStyleId;
 }
 
+/* 动态光照系统，跟随昼夜循环变化 */
 function DynamicLighting() {
   const { sunPosition, sunIntensity, ambientIntensity, sunColor, isNight, nightFactor } = useDayNight();
   const directionalLightRef = useRef<THREE.DirectionalLight>(null);
@@ -96,6 +98,7 @@ function DynamicLighting() {
   );
 }
 
+/* 动态天空背景，跟随昼夜循环变化 */
 function DynamicSky() {
   const { skyColor, isNight } = useDayNight();
   const { scene } = useThree();
@@ -122,9 +125,11 @@ function SceneContent({
   onRemoveCreature,
   lifeIndex,
   disasters = [],
+  styleId,
 }: GameCanvasProps) {
   const [hovered, setHovered] = useState(false);
 
+  /* 点击星球表面放置建筑或生物 */
   const handlePlanetClick = (point: THREE.Vector3) => {
     if (selectedTool && selectedTool !== 'delete') {
       const normalized = point.clone().normalize();
@@ -159,6 +164,7 @@ function SceneContent({
         buildings={buildings}
         creatures={creatures}
         disasters={disasters}
+        styleId={styleId}
       />
 
       <OrbitControls

@@ -1,6 +1,7 @@
 import { BUILDING_CONFIGS } from '../../utils/helpers';
 
 interface StatusBarProps {
+  planetName: string;
   lifeIndex: number;
   forestCount: number;
   glacierCount: number;
@@ -8,7 +9,9 @@ interface StatusBarProps {
   grasslandCount: number;
 }
 
+/* 顶部状态栏：显示当前星球名称、生命指数和建筑计数 */
 export function StatusBar({
+  planetName,
   lifeIndex,
   forestCount,
   glacierCount,
@@ -30,6 +33,7 @@ export function StatusBar({
             星球重生模拟器
           </h1>
           <p className="text-white/50 text-xs">Planet Rebirth Simulator</p>
+          <p className="text-sm text-cyan-300 mt-0.5 font-medium">{planetName}</p>
         </div>
 
         <div className="w-px h-12 bg-white/20" />

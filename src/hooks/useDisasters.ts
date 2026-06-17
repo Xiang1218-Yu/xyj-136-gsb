@@ -9,6 +9,7 @@ interface UseDisastersProps {
   onRemoveBuildings: (ids: string[]) => void;
 }
 
+/* 灾害系统Hook：管理灾害调度、预警、伤害计算和建筑损毁 */
 export function useDisasters({ buildings, onDamageBuildings, onRemoveBuildings }: UseDisastersProps) {
   const [activeDisasters, setActiveDisasters] = useState<ActiveDisaster[]>([]);
   const [recentDisaster, setRecentDisaster] = useState<ActiveDisaster | null>(null);
@@ -24,6 +25,7 @@ export function useDisasters({ buildings, onDamageBuildings, onRemoveBuildings }
     }
   }, []);
 
+  /* 触发一次灾害，计算伤害并更新状态 */
   const triggerDisaster = useCallback((type: DisasterType, position?: [number, number, number], intensity?: number) => {
     const config = DISASTER_CONFIGS[type];
     
@@ -105,6 +107,7 @@ export function useDisasters({ buildings, onDamageBuildings, onRemoveBuildings }
     }, 5000);
   }, [buildings, onDamageBuildings, onRemoveBuildings]);
 
+  /* 调度下一次灾害，先发送预警再触发 */
   const scheduleDisaster = useCallback((type: DisasterType) => {
     const config = DISASTER_CONFIGS[type];
     
@@ -161,6 +164,7 @@ export function useDisasters({ buildings, onDamageBuildings, onRemoveBuildings }
     timersRef.current.set(warning.id, triggerTimer);
   }, [buildings.length, clearCountdown, triggerDisaster]);
 
+  /* 初始化灾害调度循环 */
   useEffect(() => {
     const initialDelay = setTimeout(() => {
       const type = getRandomDisasterType();
@@ -175,6 +179,7 @@ export function useDisasters({ buildings, onDamageBuildings, onRemoveBuildings }
     };
   }, [clearCountdown, scheduleDisaster]);
 
+  /* 手动触发随机灾害 */
   const triggerRandomDisaster = useCallback(() => {
     if (buildings.length === 0) return;
     
@@ -210,4 +215,3 @@ export function useDisasters({ buildings, onDamageBuildings, onRemoveBuildings }
     dismissWarning,
   };
 }
-
