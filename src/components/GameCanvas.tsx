@@ -7,7 +7,7 @@ import { Planet } from './Planet';
 import { Moon } from './Moon';
 import { Sun } from './Sun';
 import { Starfield } from './Starfield';
-import { Building, Creature, BuildingType, CreatureType, ToolType, ActiveDisaster } from '../types/game';
+import { Building, Creature, BuildingType, CreatureType, ToolType, ActiveDisaster, PlanetStyle } from '../types/game';
 import { PLANET_RADIUS, isBuildingType, isCreatureType } from '../utils/helpers';
 import { useDayNight } from '../contexts/DayNightContext';
 
@@ -21,6 +21,7 @@ interface GameCanvasProps {
   onRemoveCreature: (id: string) => void;
   lifeIndex: number;
   disasters?: ActiveDisaster[];
+  planetStyle?: PlanetStyle;
 }
 
 function DynamicLighting() {
@@ -122,6 +123,7 @@ function SceneContent({
   onRemoveCreature,
   lifeIndex,
   disasters = [],
+  planetStyle = 'verdant',
 }: GameCanvasProps) {
   const [hovered, setHovered] = useState(false);
 
@@ -159,6 +161,7 @@ function SceneContent({
         buildings={buildings}
         creatures={creatures}
         disasters={disasters}
+        style={planetStyle}
       />
 
       <OrbitControls
