@@ -7,8 +7,8 @@ import { Planet } from './Planet';
 import { Moon } from './Moon';
 import { Sun } from './Sun';
 import { Starfield } from './Starfield';
-import { Building, Creature, BuildingType, CreatureType, ToolType, ActiveDisaster } from '../types/game';
-import { PLANET_RADIUS, isBuildingType, isCreatureType } from '../utils/helpers';
+import { Building, Creature, BuildingType, CreatureType, ToolType, ActiveDisaster, PlanetThemeType } from '../types/game';
+import { PLANET_RADIUS, isBuildingType, isCreatureType, PLANET_THEME_CONFIGS } from '../utils/helpers';
 import { useDayNight } from '../contexts/DayNightContext';
 
 interface GameCanvasProps {
@@ -21,6 +21,7 @@ interface GameCanvasProps {
   onRemoveCreature: (id: string) => void;
   lifeIndex: number;
   disasters?: ActiveDisaster[];
+  theme?: PlanetThemeType;
 }
 
 function DynamicLighting() {
@@ -96,15 +97,25 @@ function DynamicLighting() {
   );
 }
 
-function DynamicSky() {
+function DynamicSky({ theme = 'forest' }: { theme?: PlanetThemeType }) {
   const { skyColor, isNight } = useDayNight();
   const { scene } = useThree();
+  const themeConfig = PLANET_THEME_CONFIGS[theme];
   const fogRef = useRef(new THREE.Fog(skyColor, 20, 50));
 
   useFrame(() => {
-    scene.background = skyColor;
-    if (fogRef.current) {
-      fogRef.current.color.copy(skyColor);
+    if (isNight) {
+      scene.background = new THREE.Color('#0a0a1a');
+      if (fogRef.current) {
+        fogRef.current.color.set('#0a0a1a');
+      }
+    } else {
+      const baseColor = new THREE.Color(themeConfig.atmosphereColor);
+      const daySkyColor = baseColor.clone().multiplyScalar(0.6);
+      scene.background = daySkyColor;
+      if (fogRef.current) {
+        fogRef.current.color.copy(daySkyColor);
+      }
     }
     scene.fog = fogRef.current;
   });
@@ -122,8 +133,10 @@ function SceneContent({
   onRemoveCreature,
   lifeIndex,
   disasters = [],
+  theme = 'forest',
 }: GameCanvasProps) {
   const [hovered, setHovered] = useState(false);
+  const themeConfig = PLANET_THEME_CONFIGS[theme];
 
   const handlePlanetClick = (point: THREE.Vector3) => {
     if (selectedTool && selectedTool !== 'delete') {
@@ -141,7 +154,7 @@ function SceneContent({
 
   return (
     <>
-      <DynamicSky />
+      <DynamicSky theme={theme} />
       <DynamicLighting />
 
       <Starfield />
@@ -159,6 +172,7 @@ function SceneContent({
         buildings={buildings}
         creatures={creatures}
         disasters={disasters}
+        theme={theme}
       />
 
       <OrbitControls
